@@ -18,11 +18,12 @@ import com.example.swcapstone_android.ui.theme.SWCapstoneandroidTheme
 import kotlinx.coroutines.delay
 
 @Composable
-fun SplashScreen(onTimeout: () -> Unit) {
+fun SplashScreen(viewModel: SplashViewModel,
+                 onSplashFinished: () -> Unit) {
     // 2초 뒤에 다음 화면으로 이동하는 로직
     LaunchedEffect(Unit) {
         delay(2000)
-        onTimeout()
+        onSplashFinished()
     }
 
     Box(
@@ -37,13 +38,5 @@ fun SplashScreen(onTimeout: () -> Unit) {
             contentDescription = "App Logo",
             modifier = Modifier.size(150.dp)
         )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun SplashScreenPreview() {
-    SWCapstoneandroidTheme {
-        SplashScreen(onTimeout = {})
     }
 }
