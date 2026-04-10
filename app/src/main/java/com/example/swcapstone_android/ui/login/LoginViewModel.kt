@@ -15,13 +15,12 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
     fun handleLoginResult(jsonString: String, onSuccess: () -> Unit) {
         try {
-            // 웹뷰에서 전달받은 데이터 정제
             val cleanJson = jsonString.removeSurrounding("\"").replace("\\\"", "\"")
             val response = Gson().fromJson(cleanJson, LoginResponse::class.java)
 
             if (response.status == "SUCCESS" && response.data != null) {
                 viewModelScope.launch {
-                    // 기기에 토큰 저장
+                    // 토큰 저장
                     tokenManager.saveTokens(
                         response.data.accessToken,
                         response.data.refreshToken
@@ -38,4 +37,4 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
 // 응답 데이터 모델
 data class LoginResponse(val status: String, val data: TokenData?, val message: String?)
-data class TokenData(val accessToken: String, val refreshToken: String, val expiresIn: Int)
+data class TokenData(val accessToken: String, val refreshToken: String, val accessTokenExpiresIn: Int)
