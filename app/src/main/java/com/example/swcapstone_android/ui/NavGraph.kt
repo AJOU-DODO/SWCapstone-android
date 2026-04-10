@@ -36,7 +36,7 @@ fun NavGraph(modifier: Modifier = Modifier, navController: NavHostController){
         composable(route = Screen.LoginScreen.route) {
             val loginViewModel: LoginViewModel = viewModel()
             LoginScreen(viewModel = loginViewModel) {
-                navController.navigate(Screen.NextScreen.route)
+                // navController.navigate(Screen.NextScreen.route)
             }
         }
         /*composable(route = Screen.NextScreen.route) {

@@ -1,5 +1,8 @@
 package com.example.swcapstone_android.ui.login
 
+import android.annotation.SuppressLint
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -7,13 +10,20 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import com.example.swcapstone_android.R
 import com.example.swcapstone_android.ui.theme.DODO
 
@@ -22,26 +32,65 @@ fun LoginScreen(
     viewModel: LoginViewModel,
     onLoginSuccess: () -> Unit
 ) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(DODO),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(text = "TODO", fontSize = 24.sp)
+    var showWebView by remember { mutableStateOf(false) }
+    val mainGreenColor = Color(0xFF386641)
 
-        Box(
+    //버튼 눌렀을때 웹뷰
+    if (showWebView) {
+        LoginWebView(url = viewModel.loginUrl) { result ->
+            viewModel.handleLoginResult(result) {
+                showWebView = false
+                onLoginSuccess()
+            }
+        }
+    }
+    else {
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 48.dp),
-            contentAlignment = Alignment.Center
+                .fillMaxSize()
+                .background(DODO)
+                .padding(horizontal = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Spacer(modifier = Modifier.height(100.dp))
+
+            // 로고 이미지
+            Image(
+                painter = painterResource(id = R.mipmap.ic_launcher_foreground),
+                contentDescription = "Dodo Logo",
+                modifier = Modifier.size(180.dp),
+                contentScale = ContentScale.Fit
+            )
+
+            Text(
+                text = "DODO",
+                color = mainGreenColor,
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.headlineLarge
+            )
+
+            Spacer(modifier = Modifier.height(60.dp))
+
+            // 슬로건 텍스트
+            Text(
+                text = "가장 가까운 곳에서 시작되는\n특별한 탐험",
+                color = Color.Black,
+                fontSize = 18.sp,
+                lineHeight = 26.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            // 로그인 버튼
             GoogleSignInButton(
                 onClick = {
-                    // TODO: 실제 구글 로그인 로직을 viewModel을 통해 호출
-                    onLoginSuccess()
-                }
+                    // TODO: 실제 구글 로그인 로직 호출
+                    showWebView = true // 테스트용
+                },
+                modifier = Modifier.padding(bottom = 80.dp) // 바닥에서의 여백
             )
         }
     }
@@ -84,7 +133,6 @@ fun GoogleSignInButton(
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            // 버튼 텍스트
             Text(
                 text = "Google 계정으로 로그인",
                 fontSize = 16.sp,
@@ -92,4 +140,25 @@ fun GoogleSignInButton(
             )
         }
     }
+}
+
+@SuppressLint("SetJavaScriptEnabled")
+@Composable
+fun LoginWebView(url: String, onResult: (String) -> Unit) {
+    AndroidView(
+        factory = { context ->
+            WebView(context).apply {
+                settings.apply {
+                    javaScriptEnabled = true
+                    domStorageEnabled = true
+                    userAgentString = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36"
+                }
+                webViewClient = object : WebViewClient() {
+
+                }
+                loadUrl(url)
+            }
+        },
+        modifier = Modifier.fillMaxSize()
+    )
 }

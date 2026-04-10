@@ -1,6 +1,15 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+}
+
+val properties = Properties()
+val propertiesFile = project.rootProject.file("local.properties")
+if (propertiesFile.exists()) {
+    properties.load(FileInputStream(propertiesFile))
 }
 
 android {
@@ -19,6 +28,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        val loginUrl = properties.getProperty("LOGIN_URL") ?: ""
+        buildConfigField("String", "LOGIN_URL", "\"$loginUrl\"")
     }
 
     buildTypes {
@@ -36,6 +48,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -50,6 +63,10 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.compose.ui.text)
+    implementation(libs.androidx.datastore.core)
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.gson)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
