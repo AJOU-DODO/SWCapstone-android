@@ -154,7 +154,14 @@ fun LoginWebView(url: String, onResult: (String) -> Unit) {
                     userAgentString = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36"
                 }
                 webViewClient = object : WebViewClient() {
-
+                    override fun onPageFinished(view: WebView?, url: String?) {
+                        super.onPageFinished(view, url)
+                        view?.evaluateJavascript("(function() { return document.body.innerText; })();") { result ->
+                            if (!result.isNullOrBlank() && result != "null" && result.contains("SUCCESS")) {
+                                onResult(result)
+                            }
+                        }
+                    }
                 }
                 loadUrl(url)
             }

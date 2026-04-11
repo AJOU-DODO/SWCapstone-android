@@ -12,6 +12,8 @@ import androidx.navigation.compose.composable
 import com.example.swcapstone_android.ui.login.LoginScreen
 import com.example.swcapstone_android.ui.login.LoginViewModel
 import com.example.swcapstone_android.ui.splash.SplashViewModel
+import com.example.swcapstone_android.ui.userdetail.UserDetailScreen
+import com.example.swcapstone_android.ui.userdetail.UserDetailViewModel
 import kotlinx.coroutines.launch
 
 @Composable
@@ -33,14 +35,27 @@ fun NavGraph(modifier: Modifier = Modifier, navController: NavHostController){
                 }
             )
         }
-        composable(route = Screen.LoginScreen.route) {
+        composable("login") {
             val loginViewModel: LoginViewModel = viewModel()
-            LoginScreen(viewModel = loginViewModel) {
-                // navController.navigate(Screen.NextScreen.route)
-            }
+            LoginScreen(
+                viewModel = loginViewModel,
+                onLoginSuccess = {
+                    navController.navigate("user_detail") {
+                        popUpTo("login") { inclusive = true }
+                    }
+                }
+            )
         }
-        /*composable(route = Screen.NextScreen.route) {
-            NextScreen()
-        }*/
+        composable("user_detail") {
+            val userDetailViewModel: UserDetailViewModel = viewModel()
+            UserDetailScreen(
+                viewModel = userDetailViewModel,
+                onComplete = {
+                    navController.navigate("home") {
+                        popUpTo("login") { inclusive = true } // 로그인/상세화면은 뒤로가기 안 되게 제거
+                    }
+                }
+            )
+        }
     }
 }
