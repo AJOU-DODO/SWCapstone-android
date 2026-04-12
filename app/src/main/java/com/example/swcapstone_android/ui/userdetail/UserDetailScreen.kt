@@ -1,8 +1,13 @@
 package com.example.swcapstone_android.ui.userdetail
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,12 +15,19 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.swcapstone_android.ui.theme.DODO // 기존에 정의한 배경색
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -24,6 +36,17 @@ fun UserDetailScreen(
     viewModel: UserDetailViewModel,
     onComplete: () -> Unit
 ) {
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+
+    // 2. Photo Picker 런처 설정 (권한 팝업 없이 바로 갤러리가 열림)
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            selectedImageUri = uri
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -44,16 +67,25 @@ fun UserDetailScreen(
         Box(
             modifier = Modifier
                 .size(120.dp)
-                .background(Color(0xFFE0E0E0), shape = CircleShape)
-                .border(2.dp, Color(0xFF5A5A42), shape = CircleShape),
+                .background(Color.LightGray, CircleShape)
+                .clickable {
+                    // 3. 클릭 시 사진 선택기 실행
+                    photoPickerLauncher.launch(
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                    )
+                },
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = Icons.Default.Person,
-                contentDescription = null,
-                modifier = Modifier.size(80.dp),
-                tint = Color.Gray
-            )
+            if (selectedImageUri != null) {
+                AsyncImage( // Coil 라이브러리 사용 권장
+                    model = selectedImageUri,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize().clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Text("사진 선택")
+            }
         }
 
         Spacer(modifier = Modifier.height(60.dp))

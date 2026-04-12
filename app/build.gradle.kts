@@ -66,6 +66,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.text)
     implementation(libs.androidx.datastore.core)
     implementation(libs.androidx.datastore.preferences)
+    implementation(libs.coil.compose)
     implementation(libs.gson)
     implementation(libs.androidx.compose.foundation)
     testImplementation(libs.junit)
