@@ -1,13 +1,21 @@
 package com.example.swcapstone_android.data.remote
 
+import android.content.Context
 import com.example.swcapstone_android.BuildConfig
+import com.example.swcapstone_android.data.TokenManager
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 import kotlin.jvm.javaClass
 
 object RetrofitClient {
+    private lateinit var applicationContext: Context
+
+    fun init(context: Context) {
+        applicationContext = context.applicationContext
+    }
     private const val BASE_URL = BuildConfig.BASE_URL
 
     // 로그 확인을 위한 인터셉터
@@ -26,15 +34,23 @@ object RetrofitClient {
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-            .create(ApiService::class.java) // ⚠️ 사용 중인 서비스 인터페이스에 맞게 수정 가능
+            .create(ApiService::class.java)
     }
 
-    // S3 업로드용 (Base URL이 무의미하므로 별도로 관리하면 편함)
+    // S3 업로드용
     val s3Instance: S3Service by lazy {
         Retrofit.Builder()
-            .baseUrl("https://dummy.url/") // @Url을 쓰므로 아무 주소나 넣어도 됨
+            .baseUrl("https://dummy.url/") // @Url을 쓰므로 아무 주소나
             .client(okHttpClient)
             .build()
             .create(S3Service::class.java)
+    }
+
+    private fun getOkHttpClient(): OkHttpClient {
+        return OkHttpClient.Builder()
+            .addInterceptor(loggingInterceptor)
+            .authenticator(TokenAuthenticator(applicationContext, TokenManager(applicationContext)))
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .build()
     }
 }

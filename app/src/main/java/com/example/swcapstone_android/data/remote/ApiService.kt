@@ -1,7 +1,9 @@
 package com.example.swcapstone_android.data.remote
 
+import com.example.swcapstone_android.data.model.MyInfoResponse
 import com.example.swcapstone_android.data.model.PresignedResponse
 import com.example.swcapstone_android.data.model.ProfileRequest
+import com.example.swcapstone_android.data.model.TokenResponse
 import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.*
@@ -24,7 +26,12 @@ interface ApiService {
     @GET("/api/v1/users/me")
     suspend fun getMyInfo(
         @Header("Authorization") token: String
-    ): Response<ProfileRequest>
+    ): Response<MyInfoResponse>
+
+    @POST("/api/v1/users/reissue")
+    suspend fun reissueToken(
+        @Header("Authorization") refreshToken: String
+    ): Response<TokenResponse>
 }
 
 // S3 업로드를 위한 별도 인터페이스

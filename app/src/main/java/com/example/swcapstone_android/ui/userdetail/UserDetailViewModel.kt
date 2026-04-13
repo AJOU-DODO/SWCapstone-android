@@ -42,20 +42,20 @@ class UserDetailViewModel(application: Application) : AndroidViewModel(applicati
                 val authHeader = "Bearer $token"
                 val fileName = "profile_${System.currentTimeMillis()}.jpg"
 
-                // 1. Presigned URL 요청
+                // Presigned URL 요청
                 val presignedRes = RetrofitClient.instance.getPresignedUrl(authHeader, fileName)
                 if (presignedRes.isSuccessful && presignedRes.body() != null) {
                     val data = presignedRes.body()!!.data
 
-                    // 2. S3에 이미지 업로드 (PUT)
+                    // S3에 이미지 업로드
                     val isUploadSuccess = uploadToS3(data.presignedUrl, selectedImageUri!!)
 
                     if (isUploadSuccess) {
-                        // 3. 최종 프로필 정보 서버 전송 (POST)
+                        // 최종 프로필 정보 서버 전송
                         val profileRequest = ProfileRequest(
                             nickname = nickname,
-                            fcmToken = "임시fcm", // 요청하신 임시 토큰
-                            profileImageUrl = data.fileUrl // CloudFront CDN 주소
+                            fcmToken = "임시fcm",
+                            profileImageUrl = data.fileUrl
                         )
 
                         val postRes = RetrofitClient.instance.updateProfile(authHeader, profileRequest)

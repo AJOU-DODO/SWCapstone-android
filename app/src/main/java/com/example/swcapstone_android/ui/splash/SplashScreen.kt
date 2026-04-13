@@ -21,11 +21,13 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreen(viewModel: SplashViewModel,
-                 onSplashFinished: () -> Unit) {
+                 onSplashFinished: (String) -> Unit) {
     // 2초 뒤에 다음 화면으로 이동
     LaunchedEffect(Unit) {
         delay(2000)
-        onSplashFinished()
+        viewModel.checkLoginStatus { destination ->
+            onSplashFinished(destination)
+        }
     }
 
     Box(

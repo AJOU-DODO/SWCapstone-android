@@ -29,6 +29,10 @@ class TokenManager(private val context: Context) {
         prefs[ACCESS_TOKEN]
     }
 
+    val refreshToken: Flow<String?> = context.dataStore.data.map { prefs ->
+        prefs[REFRESH_TOKEN]
+    }
+
     // 토큰 삭제
     suspend fun clearTokens() {
         context.dataStore.edit { prefs ->

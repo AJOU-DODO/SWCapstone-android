@@ -22,21 +22,17 @@ fun NavGraph(modifier: Modifier = Modifier, navController: NavHostController){
     NavHost(navController = navController, startDestination = Screen.SplashScreen.route){
         composable(route = Screen.SplashScreen.route) {
             val splashViewModel: SplashViewModel = viewModel()
-            val scope = rememberCoroutineScope()
 
             SplashScreen(
                 viewModel = splashViewModel,
-                onSplashFinished = {
-                    scope.launch {
-                        kotlinx.coroutines.delay(2000)
-                        navController.navigate(Screen.LoginScreen.route) {
-                            popUpTo(Screen.SplashScreen.route) { inclusive = true }
-                        }
+                onSplashFinished = { destination ->
+                    navController.navigate(destination) {
+                        popUpTo(Screen.SplashScreen.route) { inclusive = true }
                     }
                 }
             )
         }
-        composable(Screen.SplashScreen.route) {
+        composable(Screen.LoginScreen.route) {
             val loginViewModel: LoginViewModel = viewModel()
             LoginScreen(
                 viewModel = loginViewModel,
