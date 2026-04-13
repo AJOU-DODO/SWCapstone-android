@@ -6,22 +6,86 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import android.net.Uri
+import android.util.Log
 import com.example.swcapstone_android.data.TokenManager
+import com.example.swcapstone_android.data.model.ProfileRequest
+import com.example.swcapstone_android.data.remote.RetrofitClient
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.toRequestBody
 
 class UserDetailViewModel(application: Application) : AndroidViewModel(application) {
     private val tokenManager = TokenManager(application)
+    private val contentResolver = application.contentResolver
 
-    // 닉네임 입력 상태
+    var selectedImageUri by mutableStateOf<Uri?>(null)
     var nickname by mutableStateOf("")
+    var showDialog by mutableStateOf(false)
 
-    fun saveProfile(onSuccess: () -> Unit) {
+    fun onStartClick(onSuccess: () -> Unit) {
+        // 유효성 검사
+        if (nickname.isBlank() || selectedImageUri == null) {
+            showDialog = true
+        } else {
+            saveProfileProcess(onSuccess)
+        }
+    }
+
+    private fun saveProfileProcess(onSuccess: () -> Unit) {
         viewModelScope.launch {
-            // TODO: 여기서 서버 API(POST /api/user/profile 등)를 호출해서 닉네임 저장
-            // 지금은 토큰이 잘 있는지 확인하는 용도로 로그만 찍을게
+            try {
+                val token = tokenManager.accessToken.first() ?: return@launch
+                val authHeader = "Bearer $token"
+                val fileName = "profile_${System.currentTimeMillis()}.jpg"
 
-            // 성공했다고 가정하고 메인으로 이동
-            onSuccess()
+                // 1. Presigned URL 요청
+                val presignedRes = RetrofitClient.instance.getPresignedUrl(authHeader, fileName)
+                if (presignedRes.isSuccessful && presignedRes.body() != null) {
+                    val data = presignedRes.body()!!.data
+
+                    // 2. S3에 이미지 업로드 (PUT)
+                    val isUploadSuccess = uploadToS3(data.presignedUrl, selectedImageUri!!)
+
+                    if (isUploadSuccess) {
+                        // 3. 최종 프로필 정보 서버 전송 (POST)
+                        val profileRequest = ProfileRequest(
+                            nickname = nickname,
+                            fcmToken = "임시fcm", // 요청하신 임시 토큰
+                            profileImageUrl = data.fileUrl // CloudFront CDN 주소
+                        )
+
+                        val postRes = RetrofitClient.instance.updateProfile(authHeader, profileRequest)
+                        if (postRes.isSuccessful) {
+                            withContext(Dispatchers.Main) {
+                                onSuccess()
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("UserDetail", "Error: ${e.message}")
+            }
+        }
+    }
+
+    private suspend fun uploadToS3(url: String, uri: Uri): Boolean {
+        return withContext(Dispatchers.IO) {
+            try {
+                val inputStream = contentResolver.openInputStream(uri)
+                val bytes = inputStream?.readBytes() ?: return@withContext false
+                inputStream.close()
+
+                val requestBody = bytes.toRequestBody("image/jpeg".toMediaTypeOrNull())
+                // S3 전용 인스턴스 사용
+                val response = RetrofitClient.s3Instance.uploadImage(url, requestBody, "image/jpeg")
+                response.isSuccessful
+            } catch (e: Exception) {
+                false
+            }
         }
     }
 }

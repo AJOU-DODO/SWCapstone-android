@@ -36,14 +36,11 @@ fun UserDetailScreen(
     viewModel: UserDetailViewModel,
     onComplete: () -> Unit
 ) {
-    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
-
-    // 2. Photo Picker 런처 설정 (권한 팝업 없이 바로 갤러리가 열림)
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
         if (uri != null) {
-            selectedImageUri = uri
+            viewModel.selectedImageUri = uri
         }
     }
 
@@ -68,6 +65,7 @@ fun UserDetailScreen(
             modifier = Modifier
                 .size(120.dp)
                 .background(Color.LightGray, CircleShape)
+                .clip(CircleShape)
                 .clickable {
                     // 3. 클릭 시 사진 선택기 실행
                     photoPickerLauncher.launch(
@@ -76,9 +74,9 @@ fun UserDetailScreen(
                 },
             contentAlignment = Alignment.Center
         ) {
-            if (selectedImageUri != null) {
+            if (viewModel.selectedImageUri != null) {
                 AsyncImage( // Coil 라이브러리 사용 권장
-                    model = selectedImageUri,
+                    model = viewModel.selectedImageUri,
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize().clip(CircleShape),
                     contentScale = ContentScale.Crop
@@ -109,14 +107,15 @@ fun UserDetailScreen(
                 unfocusedIndicatorColor = Color.Gray,
             ),
             // Material3 TextField에는 textAlign이 직접 없으니 TextStyle로 지정해
-            textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center)
+            textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
+            singleLine = true
         )
 
         Spacer(modifier = Modifier.height(80.dp))
 
         // 시작하기 버튼
         OutlinedButton(
-            onClick = { viewModel.saveProfile(onComplete) },
+            onClick = { viewModel.onStartClick(onComplete) },
             modifier = Modifier
                 .width(120.dp)
                 .height(50.dp),
@@ -126,5 +125,16 @@ fun UserDetailScreen(
         ) {
             Text("시작하기")
         }
+    }
+
+    if (viewModel.showDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.showDialog = false },
+            confirmButton = {
+                TextButton(onClick = { viewModel.showDialog = false }) { Text("확인") }
+            },
+            title = { Text("알림") },
+            text = { Text("사진과 닉네임을 모두 입력해주세요!") }
+        )
     }
 }

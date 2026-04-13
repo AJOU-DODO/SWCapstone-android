@@ -10,7 +10,7 @@ import com.google.gson.Gson
 import kotlinx.coroutines.launch
 
 class LoginViewModel(application: Application) : AndroidViewModel(application) {
-    val loginUrl = BuildConfig.LOGIN_URL
+    val loginUrl = "${BuildConfig.BASE_URL}/api/v1/auth/google"
     private val tokenManager = TokenManager(application)
 
     fun handleLoginResult(jsonString: String, onSuccess: () -> Unit) {

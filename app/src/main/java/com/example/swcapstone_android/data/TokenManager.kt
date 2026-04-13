@@ -1,4 +1,4 @@
-package com.example.swcapstone_android.data // 패키지 경로는 네 프로젝트에 맞게 수정
+package com.example.swcapstone_android.data
 
 import android.content.Context
 import androidx.datastore.preferences.core.edit
