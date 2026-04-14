@@ -25,7 +25,7 @@ class SplashViewModel(application: Application) : AndroidViewModel(application) 
             Log.d("Splash", "읽어온 토큰: $token")
 
             if (token == null) {
-                onResult("login") // 토큰 없으면 로그인
+                onResult(Screen.LoginScreen.route) // 토큰 없으면 로그인
                 return@launch
             }
 

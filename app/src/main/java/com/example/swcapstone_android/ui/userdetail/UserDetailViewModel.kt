@@ -11,9 +11,11 @@ import android.util.Log
 import com.example.swcapstone_android.data.TokenManager
 import com.example.swcapstone_android.data.model.ProfileRequest
 import com.example.swcapstone_android.data.remote.RetrofitClient
+import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -25,6 +27,7 @@ class UserDetailViewModel(application: Application) : AndroidViewModel(applicati
     var selectedImageUri by mutableStateOf<Uri?>(null)
     var nickname by mutableStateOf("")
     var showDialog by mutableStateOf(false)
+    var isUploading by mutableStateOf(false)
 
     fun onStartClick(onSuccess: () -> Unit) {
         // 유효성 검사
@@ -37,7 +40,15 @@ class UserDetailViewModel(application: Application) : AndroidViewModel(applicati
 
     private fun saveProfileProcess(onSuccess: () -> Unit) {
         viewModelScope.launch {
+            isUploading = true
             try {
+                val fcmToken = try {
+                    FirebaseMessaging.getInstance().token.await()
+                } catch (e: Exception) {
+                    Log.e("FCM", "Token fetch failed", e)
+                    "failed_to_get_token"
+                }
+
                 val token = tokenManager.accessToken.first() ?: return@launch
                 val authHeader = "Bearer $token"
                 val fileName = "profile_${System.currentTimeMillis()}.jpg"
@@ -54,7 +65,7 @@ class UserDetailViewModel(application: Application) : AndroidViewModel(applicati
                         // 최종 프로필 정보 서버 전송
                         val profileRequest = ProfileRequest(
                             nickname = nickname,
-                            fcmToken = "임시fcm",
+                            fcmToken = fcmToken,
                             profileImageUrl = data.fileUrl
                         )
 
@@ -68,6 +79,8 @@ class UserDetailViewModel(application: Application) : AndroidViewModel(applicati
                 }
             } catch (e: Exception) {
                 Log.e("UserDetail", "Error: ${e.message}")
+            } finally {
+                isUploading = false
             }
         }
     }
