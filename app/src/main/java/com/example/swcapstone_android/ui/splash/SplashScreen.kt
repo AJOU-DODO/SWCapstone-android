@@ -1,5 +1,7 @@
 package com.example.swcapstone_android.ui.splash
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import com.example.swcapstone_android.R
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -19,11 +21,13 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreen(viewModel: SplashViewModel,
-                 onSplashFinished: () -> Unit) {
-    // 2초 뒤에 다음 화면으로 이동하는 로직
+                 onSplashFinished: (String) -> Unit) {
+    // 2초 뒤에 다음 화면으로 이동
     LaunchedEffect(Unit) {
         delay(2000)
-        onSplashFinished()
+        viewModel.checkLoginStatus { destination ->
+            onSplashFinished(destination)
+        }
     }
 
     Box(

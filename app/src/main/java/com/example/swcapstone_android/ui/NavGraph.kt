@@ -9,9 +9,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.swcapstone_android.ui.home.HomeScreen
 import com.example.swcapstone_android.ui.login.LoginScreen
 import com.example.swcapstone_android.ui.login.LoginViewModel
 import com.example.swcapstone_android.ui.splash.SplashViewModel
+import com.example.swcapstone_android.ui.userdetail.UserDetailScreen
+import com.example.swcapstone_android.ui.userdetail.UserDetailViewModel
 import kotlinx.coroutines.launch
 
 @Composable
@@ -19,28 +22,48 @@ fun NavGraph(modifier: Modifier = Modifier, navController: NavHostController){
     NavHost(navController = navController, startDestination = Screen.SplashScreen.route){
         composable(route = Screen.SplashScreen.route) {
             val splashViewModel: SplashViewModel = viewModel()
-            val scope = rememberCoroutineScope()
 
             SplashScreen(
                 viewModel = splashViewModel,
-                onSplashFinished = {
-                    scope.launch {
-                        kotlinx.coroutines.delay(2000)
-                        navController.navigate(Screen.LoginScreen.route) {
-                            popUpTo(Screen.SplashScreen.route) { inclusive = true }
-                        }
+                onSplashFinished = { destination ->
+
+                    navController.navigate(destination) {
+                        popUpTo(Screen.SplashScreen.route) { inclusive = true }
                     }
                 }
             )
         }
-        composable(route = Screen.LoginScreen.route) {
+        composable(Screen.LoginScreen.route) {
             val loginViewModel: LoginViewModel = viewModel()
-            LoginScreen(viewModel = loginViewModel) {
-                // navController.navigate(Screen.NextScreen.route)
-            }
+            LoginScreen(
+                viewModel = loginViewModel,
+                onLoginSuccess = { isOnboarded ->
+                    val destination = if (isOnboarded) {
+                        Screen.HomeScreen.route
+                    } else {
+                        Screen.DetailScreen.route
+                    }
+
+                    navController.navigate(destination) {
+                        popUpTo(Screen.LoginScreen.route) { inclusive = true }
+                    }
+                }
+            )
         }
-        /*composable(route = Screen.NextScreen.route) {
-            NextScreen()
-        }*/
+        composable(Screen.DetailScreen.route) {
+            val userDetailViewModel: UserDetailViewModel = viewModel()
+            UserDetailScreen(
+                viewModel = userDetailViewModel,
+                onComplete = {
+                    navController.navigate(Screen.HomeScreen.route) {
+                        popUpTo(Screen.LoginScreen.route) { inclusive = true } // 뒤로가기 금지
+                    }
+                }
+            )
+        }
+
+        composable(Screen.HomeScreen.route) {
+            HomeScreen()
+        }
     }
 }

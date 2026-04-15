@@ -1,4 +1,4 @@
-package com.example.swcapstone_android.data // 패키지 경로는 네 프로젝트에 맞게 수정
+package com.example.swcapstone_android.data
 
 import android.content.Context
 import androidx.datastore.preferences.core.edit
@@ -27,6 +27,10 @@ class TokenManager(private val context: Context) {
     // 토큰 가져오기
     val accessToken: Flow<String?> = context.dataStore.data.map { prefs ->
         prefs[ACCESS_TOKEN]
+    }
+
+    val refreshToken: Flow<String?> = context.dataStore.data.map { prefs ->
+        prefs[REFRESH_TOKEN]
     }
 
     // 토큰 삭제

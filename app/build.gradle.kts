@@ -4,6 +4,7 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.google.services)
 }
 
 val properties = Properties()
@@ -13,7 +14,7 @@ if (propertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.example.swcapstone_android"
+        namespace = "com.example.swcapstone_android"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -29,8 +30,8 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        val loginUrl = properties.getProperty("LOGIN_URL") ?: ""
-        buildConfigField("String", "LOGIN_URL", "\"$loginUrl\"")
+        val baseUrl = properties.getProperty("BASE_URL") ?: ""
+        buildConfigField("String", "BASE_URL", "\"$baseUrl\"")
     }
 
     buildTypes {
@@ -66,7 +67,14 @@ dependencies {
     implementation(libs.androidx.compose.ui.text)
     implementation(libs.androidx.datastore.core)
     implementation(libs.androidx.datastore.preferences)
+    implementation(libs.coil.compose)
     implementation(libs.gson)
+    implementation(libs.androidx.compose.foundation)
+    implementation(libs.retrofit.core)
+    implementation(libs.retrofit.converter.gson)
+    implementation(libs.okhttp.logging)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
