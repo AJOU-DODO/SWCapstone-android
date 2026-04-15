@@ -30,7 +30,7 @@ import com.example.swcapstone_android.ui.theme.DODO
 @Composable
 fun LoginScreen(
     viewModel: LoginViewModel,
-    onLoginSuccess: () -> Unit
+    onLoginSuccess: (Boolean) -> Unit
 ) {
     var showWebView by remember { mutableStateOf(false) }
     val mainGreenColor = Color(0xFF386641)
@@ -38,9 +38,9 @@ fun LoginScreen(
     //버튼 눌렀을때 웹뷰
     if (showWebView) {
         LoginWebView(url = viewModel.loginUrl) { result ->
-            viewModel.handleLoginResult(result) {
+            viewModel.handleLoginResult(result) { isOnboarded ->
                 showWebView = false
-                onLoginSuccess()
+                onLoginSuccess(isOnboarded)
             }
         }
     }

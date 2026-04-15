@@ -7,5 +7,6 @@ data class TokenResponse(
 
 data class TokenData(
     val accessToken: String,
-    val refreshToken: String
+    val refreshToken: String,
+    val onboarded: Boolean
 )

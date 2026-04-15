@@ -18,13 +18,11 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     override fun onNewToken(token: String) {
         super.onNewToken(token)
         Log.d("FCM", "New Token: $token")
-        // 여기서 서버에 토큰 업데이트 API를 호출하면 더 완벽해!
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
 
-        // 데이터 페이로드가 있는 경우 처리
         remoteMessage.notification?.let {
             sendNotification(it.title, it.body)
         }

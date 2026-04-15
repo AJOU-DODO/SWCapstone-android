@@ -13,7 +13,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     val loginUrl = "${BuildConfig.BASE_URL}/api/v1/auth/google"
     private val tokenManager = TokenManager(application)
 
-    fun handleLoginResult(jsonString: String, onSuccess: () -> Unit) {
+    fun handleLoginResult(jsonString: String, onSuccess: (Boolean) -> Unit) {
         try {
             val cleanJson = jsonString.removeSurrounding("\"").replace("\\\"", "\"")
             val response = Gson().fromJson(cleanJson, LoginResponse::class.java)
@@ -26,7 +26,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                         response.data.refreshToken
                     )
                     Log.d("Login", "토큰 저장 완료!")
-                    onSuccess()
+                    onSuccess(response.data.onboarded)
                 }
             }
         } catch (e: Exception) {
@@ -37,4 +37,4 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
 // 응답 데이터 모델
 data class LoginResponse(val status: String, val data: TokenData?, val message: String?)
-data class TokenData(val accessToken: String, val refreshToken: String, val accessTokenExpiresIn: Int)
+data class TokenData(val accessToken: String, val refreshToken: String, val accessTokenExpiresIn: Int, val onboarded: Boolean)

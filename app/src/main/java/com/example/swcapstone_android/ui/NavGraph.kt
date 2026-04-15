@@ -26,6 +26,7 @@ fun NavGraph(modifier: Modifier = Modifier, navController: NavHostController){
             SplashScreen(
                 viewModel = splashViewModel,
                 onSplashFinished = { destination ->
+
                     navController.navigate(destination) {
                         popUpTo(Screen.SplashScreen.route) { inclusive = true }
                     }
@@ -36,8 +37,14 @@ fun NavGraph(modifier: Modifier = Modifier, navController: NavHostController){
             val loginViewModel: LoginViewModel = viewModel()
             LoginScreen(
                 viewModel = loginViewModel,
-                onLoginSuccess = {
-                    navController.navigate(Screen.DetailScreen.route) {
+                onLoginSuccess = { isOnboarded ->
+                    val destination = if (isOnboarded) {
+                        Screen.HomeScreen.route
+                    } else {
+                        Screen.DetailScreen.route
+                    }
+
+                    navController.navigate(destination) {
                         popUpTo(Screen.LoginScreen.route) { inclusive = true }
                     }
                 }
@@ -49,7 +56,7 @@ fun NavGraph(modifier: Modifier = Modifier, navController: NavHostController){
                 viewModel = userDetailViewModel,
                 onComplete = {
                     navController.navigate(Screen.HomeScreen.route) {
-                        popUpTo("login") { inclusive = true } // 뒤로가기 금지
+                        popUpTo(Screen.LoginScreen.route) { inclusive = true } // 뒤로가기 금지
                     }
                 }
             )
