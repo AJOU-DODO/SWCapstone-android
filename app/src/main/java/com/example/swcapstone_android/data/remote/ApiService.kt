@@ -3,6 +3,7 @@ package com.example.swcapstone_android.data.remote
 import com.example.swcapstone_android.data.model.MyInfoResponse
 import com.example.swcapstone_android.data.model.PresignedResponse
 import com.example.swcapstone_android.data.model.ProfileRequest
+import com.example.swcapstone_android.data.model.ReissueRequest
 import com.example.swcapstone_android.data.model.TokenResponse
 import okhttp3.RequestBody
 import retrofit2.Response
@@ -28,9 +29,9 @@ interface ApiService {
         @Header("Authorization") token: String
     ): Response<MyInfoResponse>
 
-    @POST("/api/v1/users/reissue")
+    @POST("/api/v1/auth/reissue")
     suspend fun reissueToken(
-        @Header("Authorization") refreshToken: String
+        @Body request: ReissueRequest
     ): Response<TokenResponse>
 }
 
