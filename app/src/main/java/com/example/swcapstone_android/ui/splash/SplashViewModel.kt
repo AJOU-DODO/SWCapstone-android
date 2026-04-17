@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.swcapstone_android.data.TokenManager
+import com.example.swcapstone_android.data.model.ReissueRequest
 import com.example.swcapstone_android.data.remote.RetrofitClient
 import com.example.swcapstone_android.ui.Screen
 import kotlinx.coroutines.flow.first
@@ -25,7 +26,9 @@ class SplashViewModel(application: Application) : AndroidViewModel(application) 
             }
 
             try {
-                /*val responseR = RetrofitClient.instance.reissueToken(refreshToken)
+                val request = ReissueRequest(refreshToken = refreshToken)
+                val responseR = RetrofitClient.instance.reissueToken(request)
+                Log.d("Splash", "response: ${responseR.body()!!.data.accessToken}")
                 if (responseR.isSuccessful && responseR.body() != null) {
                     val token = responseR.body()!!.data
                     tokenManager.saveTokens(
@@ -41,9 +44,9 @@ class SplashViewModel(application: Application) : AndroidViewModel(application) 
                 } else {
                     Log.e("Splash", "서버 응답 실패: 코드 ${responseR.code()}, 메시지 ${responseR.message()}")
                     onResult(Screen.LoginScreen.route) //에러 시 로그인
-                }*/
+                }
 
-                val response = RetrofitClient.instance.getMyInfo("Bearer $token")
+                /*val response = RetrofitClient.instance.getMyInfo("Bearer $token")
                 if (response.isSuccessful && response.body() != null) {
                     val user = response.body()!!.data
                     Log.d("Splash", "서버 응답 성공! 닉네임: ${user.nickname}")
@@ -55,7 +58,7 @@ class SplashViewModel(application: Application) : AndroidViewModel(application) 
                 } else {
                     Log.e("Splash", "서버 응답 실패: 코드 ${response.code()}, 메시지 ${response.message()}")
                     onResult(Screen.LoginScreen.route) //에러 시 로그인
-                }
+                }*/
             } catch (e: Exception) {
                 Log.e("Splash", "예외 발생: ${e.message}")
                 onResult(Screen.LoginScreen.route)

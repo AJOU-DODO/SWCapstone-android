@@ -3,6 +3,7 @@ package com.example.swcapstone_android.data.remote
 import android.content.Context
 import com.example.swcapstone_android.BuildConfig
 import com.example.swcapstone_android.data.TokenManager
+import com.example.swcapstone_android.data.model.ReissueRequest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import okhttp3.Authenticator
@@ -28,7 +29,9 @@ class TokenAuthenticator(
             .create(ApiService::class.java)
 
         // 3. 재발급 API 호출
-        val reissueRes = runBlocking { res.reissueToken("Bearer $refreshToken") }
+        val reissueRes = runBlocking {
+            res.reissueToken(ReissueRequest(refreshToken = refreshToken))
+        }
 
         return if (reissueRes.isSuccessful && reissueRes.body() != null) {
             val newData = reissueRes.body()!!.data
