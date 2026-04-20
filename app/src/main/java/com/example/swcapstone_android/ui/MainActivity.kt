@@ -31,7 +31,7 @@ class MainActivity : ComponentActivity() {
                 if (!view.isInEditMode) {
                     val window = (view.context as Activity).window
                     WindowCompat.getInsetsController(window, view).apply {
-                        hide(WindowInsetsCompat.Type.systemBars())
+                        hide(WindowInsetsCompat.Type.navigationBars())
                         systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
                     }
                 }
