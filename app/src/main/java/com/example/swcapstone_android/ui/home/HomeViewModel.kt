@@ -26,6 +26,17 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         LatLng(37.5655, 126.9770)
     )
 
+    var showBottomSheet by mutableStateOf(false)
+
+    // 선택된 장소의
+    var selectedUrl by mutableStateOf("https://www.google.com")
+
+    fun onMarkerClick(position: LatLng) {
+        // 핀을 누르면 호출될 함수
+        selectedUrl = "https://www.google.com" // 지금은 구글로 고정
+        showBottomSheet = true
+    }
+
     fun updatePermissionStatus(granted: Boolean) {
         isLocationPermissionGranted = granted
     }

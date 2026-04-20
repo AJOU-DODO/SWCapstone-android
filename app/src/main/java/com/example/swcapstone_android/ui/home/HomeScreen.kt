@@ -1,5 +1,7 @@
 package com.example.swcapstone_android.ui.home
 
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -15,6 +17,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.swcapstone_android.R
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -23,9 +26,14 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.maps.android.compose.*
 
-@OptIn(ExperimentalPermissionsApi::class)
+@OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
+
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = false // 반만 펼쳐지는 드래그 가능
+    )
+
     // 위치 권한 상태 기억 (Accompanist Permissions 라이브러리)
     val locationPermissionState = rememberPermissionState(
         android.Manifest.permission.ACCESS_FINE_LOCATION
@@ -49,6 +57,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
             properties = MapProperties(
                 isMyLocationEnabled = viewModel.isLocationPermissionGranted
             ),
+            onMapClick = { viewModel.showBottomSheet = false },
             uiSettings = MapUiSettings(
                 zoomControlsEnabled = false,
                 myLocationButtonEnabled = false
@@ -58,7 +67,11 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
             viewModel.markers.forEach { position ->
                 Marker(
                     state = MarkerState(position = position),
-                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
+                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED),
+                    onClick = {
+                        viewModel.onMarkerClick(it.position)
+                        true
+                    }
                 )
             }
         }
@@ -72,6 +85,37 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
             onMenuClick = { /* 메뉴 열기 */ },
             modifier = Modifier.align(Alignment.BottomCenter)
         )
+
+        if (viewModel.showBottomSheet) {
+            ModalBottomSheet(
+                onDismissRequest = { viewModel.showBottomSheet = false },
+                sheetState = sheetState,
+                containerColor = Color(0xFFFAF7E4), // 이미지와 비슷한 색감
+                dragHandle = { BottomSheetDefaults.DragHandle() } // '...' 부분
+            ) {
+                // 바텀 시트 내부 내용
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight(0.9f) // 화면의 70% 정도 높이까지 올라옴
+                        .padding(bottom = 16.dp)
+                ) {
+                    AndroidView(
+                        factory = { context ->
+                            WebView(context).apply {
+                                settings.javaScriptEnabled = true
+                                webViewClient = WebViewClient() // 새 창 뜨지 않게 방지
+                                loadUrl(viewModel.selectedUrl)
+                            }
+                        },
+                        update = { /* 갱신 필요 시 처리 */ },
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp)
+                    )
+                }
+            }
+        }
     }
 }
 
