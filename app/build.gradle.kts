@@ -31,7 +31,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        val baseUrl = properties.getProperty("BASE_URL") // 파일에 없으면 기본값 사용
+        val baseUrl = properties.getProperty("BASE_URL") ?: ""
         buildConfigField("String", "BASE_URL", "\"$baseUrl\"")
     }
 
