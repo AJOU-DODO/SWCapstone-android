@@ -5,36 +5,28 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.viewModelScope
-import com.example.swcapstone_android.data.TokenManager
-import com.example.swcapstone_android.data.model.UserData
-import com.example.swcapstone_android.data.remote.RetrofitClient
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.CameraPositionState
+
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
-    private val tokenManager = TokenManager(application)
+    // 현재 지도 카메라 상태
+    var cameraPositionState by mutableStateOf<CameraPositionState>(CameraPositionState(
+        position = CameraPosition.fromLatLngZoom(LatLng(37.5665, 126.9780), 15f)
+    ))
 
-    // 서버에서 받아온 유저 정보를 담을 상태
-    var userData by mutableStateOf<UserData?>(null)
-    var isLoading by mutableStateOf(false)
+    // 위치 권한 허용 여부
+    var isLocationPermissionGranted by mutableStateOf(false)
 
-    fun fetchMyInfo() {
-        viewModelScope.launch {
-            isLoading = true
-            try {
-                val token = tokenManager.accessToken.first()
-                if (token != null) {
-                    val response = RetrofitClient.instance.getMyInfo("Bearer $token")
-                    if (response.isSuccessful && response.body() != null) {
-                        userData = response.body()!!.data
-                    }
-                }
-            } catch (e: Exception) {
-                // 에러 처리
-            } finally {
-                isLoading = false
-            }
-        }
+    // 마커 데이터 (예시 데이터)
+    val markers = listOf(
+        LatLng(37.5665, 126.9785),
+        LatLng(37.5670, 126.9790),
+        LatLng(37.5655, 126.9770)
+    )
+
+    fun updatePermissionStatus(granted: Boolean) {
+        isLocationPermissionGranted = granted
     }
 }

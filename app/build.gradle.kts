@@ -4,7 +4,7 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.google.services)
+    //alias(libs.plugins.google.services)
     alias(libs.plugins.secrets.gradle.plugin)
 }
 
@@ -31,7 +31,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        val baseUrl = properties.getProperty("BASE_URL") ?: ""
+        val baseUrl = properties.getProperty("BASE_URL") // 파일에 없으면 기본값 사용
         buildConfigField("String", "BASE_URL", "\"$baseUrl\"")
     }
 
@@ -75,10 +75,13 @@ dependencies {
     implementation(libs.retrofit.converter.gson)
     implementation(libs.okhttp.logging)
     implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.messaging.ktx)
+    implementation(libs.firebase.messaging)
+    implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.play.services.maps)
     implementation(libs.maps.compose)
     implementation(libs.maps.compose.utils)
+    implementation(libs.accompanist.permissions)
+    implementation(libs.play.services.location)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
