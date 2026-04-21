@@ -41,27 +41,8 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
     )
 
     // 화면 진입 시 권한 요청
-    LaunchedEffect(Unit) {
-        locationPermissionState.launchPermissionRequest()
-    }
-
-    // 권한 허용 여부를 ViewModel에 업데이트
     LaunchedEffect(locationPermissionState.status.isGranted) {
-        val granted = locationPermissionState.status.isGranted
-        viewModel.updatePermissionStatus(granted)
-
-        if (granted) {
-            // 권한이 수락되면 "내 위치" 기준으로 핀 가져오기 호출
-            viewModel.fetchPinsAtUserLocation()
-        }
-    }
-
-    LaunchedEffect(viewModel.isLocationPermissionGranted) {
-        if (viewModel.isLocationPermissionGranted) {
-            // 예시: 현재 카메라 중심좌표 기준으로 핀 요청
-            val currentPos = viewModel.cameraPositionState.position.target
-            viewModel.fetchNearbyPins(currentPos.latitude, currentPos.longitude)
-        }
+        viewModel.updatePermissionStatus(locationPermissionState.status.isGranted)
     }
 
     Box(modifier = Modifier.fillMaxSize()) {

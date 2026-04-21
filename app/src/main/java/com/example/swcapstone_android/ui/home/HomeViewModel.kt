@@ -50,7 +50,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun updatePermissionStatus(granted: Boolean) {
+        val isChanged = isLocationPermissionGranted != granted
         isLocationPermissionGranted = granted
+
+        if (isChanged && granted) {
+            fetchPinsAtUserLocation()
+        }
     }
 
     fun fetchNearbyPins(lat: Double, lng: Double) {
