@@ -24,6 +24,7 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
 
 @OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
@@ -46,7 +47,21 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
 
     // 권한 허용 여부를 ViewModel에 업데이트
     LaunchedEffect(locationPermissionState.status.isGranted) {
-        viewModel.updatePermissionStatus(locationPermissionState.status.isGranted)
+        val granted = locationPermissionState.status.isGranted
+        viewModel.updatePermissionStatus(granted)
+
+        if (granted) {
+            // 권한이 수락되면 "내 위치" 기준으로 핀 가져오기 호출
+            viewModel.fetchPinsAtUserLocation()
+        }
+    }
+
+    LaunchedEffect(viewModel.isLocationPermissionGranted) {
+        if (viewModel.isLocationPermissionGranted) {
+            // 예시: 현재 카메라 중심좌표 기준으로 핀 요청
+            val currentPos = viewModel.cameraPositionState.position.target
+            viewModel.fetchNearbyPins(currentPos.latitude, currentPos.longitude)
+        }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -64,12 +79,12 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
             )
         ) {
             // 마커 표시
-            viewModel.markers.forEach { position ->
+            viewModel.markers.forEach { pin ->
                 Marker(
-                    state = MarkerState(position = position),
+                    state = MarkerState(position = LatLng(pin.latitude, pin.longitude)),
                     icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED),
                     onClick = {
-                        viewModel.onMarkerClick(it.position)
+                        viewModel.onMarkerClick(LatLng(pin.latitude, pin.longitude))
                         true
                     }
                 )

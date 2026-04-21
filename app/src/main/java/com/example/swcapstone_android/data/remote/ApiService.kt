@@ -1,6 +1,7 @@
 package com.example.swcapstone_android.data.remote
 
 import com.example.swcapstone_android.data.model.MyInfoResponse
+import com.example.swcapstone_android.data.model.PinResponse
 import com.example.swcapstone_android.data.model.PresignedResponse
 import com.example.swcapstone_android.data.model.ProfileRequest
 import com.example.swcapstone_android.data.model.ReissueRequest
@@ -33,6 +34,13 @@ interface ApiService {
     suspend fun reissueToken(
         @Body request: ReissueRequest
     ): Response<TokenResponse>
+
+    @GET("/api/v1/nests/pins")
+    suspend fun getNearbyPins(
+        @Header("Authorization") token: String,
+        @Query("latitude") latitude: Double,
+        @Query("longitude") longitude: Double
+    ): Response<PinResponse>
 }
 
 // S3 업로드를 위한 별도 인터페이스
