@@ -1,15 +1,21 @@
 package com.example.swcapstone_android.ui.home
 
+import android.view.ViewGroup
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -20,31 +26,33 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.swcapstone_android.R
+import com.example.swcapstone_android.data.bridge.WebBridge
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
 
 @OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
 
+    val webBridge = remember { WebBridge() }
+
+    val selectedIds by viewModel.selectedNestIds.collectAsState()
+    val accessToken by viewModel.accessToken.collectAsState(initial = null)
+
     val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = false // 반만 펼쳐지는 드래그 가능
+        skipPartiallyExpanded = false
     )
 
-    // 위치 권한 상태 기억 (Accompanist Permissions 라이브러리)
+    // 위치 권한 상태 기억
     val locationPermissionState = rememberPermissionState(
         android.Manifest.permission.ACCESS_FINE_LOCATION
     )
 
     // 화면 진입 시 권한 요청
-    LaunchedEffect(Unit) {
-        locationPermissionState.launchPermissionRequest()
-    }
-
-    // 권한 허용 여부를 ViewModel에 업데이트
     LaunchedEffect(locationPermissionState.status.isGranted) {
         viewModel.updatePermissionStatus(locationPermissionState.status.isGranted)
     }
@@ -64,19 +72,19 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
             )
         ) {
             // 마커 표시
-            viewModel.markers.forEach { position ->
+            viewModel.markers.forEach { pin ->
                 Marker(
-                    state = MarkerState(position = position),
+                    state = MarkerState(position = LatLng(pin.latitude, pin.longitude)),
                     icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED),
                     onClick = {
-                        viewModel.onMarkerClick(it.position)
+                        viewModel.onMarkerClick(pin)
                         true
                     }
                 )
             }
         }
 
-        // 상단 바 (DODO 로고)
+        // 상단 바
         HomeTopBar(modifier = Modifier.align(Alignment.TopCenter))
 
         // 하단 버튼들 (알림, 메뉴)
@@ -90,25 +98,45 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
             ModalBottomSheet(
                 onDismissRequest = { viewModel.showBottomSheet = false },
                 sheetState = sheetState,
-                containerColor = Color(0xFFFAF7E4), // 이미지와 비슷한 색감
-                dragHandle = { BottomSheetDefaults.DragHandle() } // '...' 부분
+                contentWindowInsets = { WindowInsets(0.dp) },
+                containerColor = Color(0xFFFAF7E4),
+                dragHandle = { BottomSheetDefaults.DragHandle() }
             ) {
                 // 바텀 시트 내부 내용
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .fillMaxHeight(0.9f) // 화면의 70% 정도 높이까지 올라옴
+                        .fillMaxHeight(0.9f) // 화면의 90% 정도 높이까지 올라옴
                         .padding(bottom = 16.dp)
                 ) {
                     AndroidView(
                         factory = { context ->
+                            //WebView.setWebContentsDebuggingEnabled(true) 디버그 필요할때만
                             WebView(context).apply {
                                 settings.javaScriptEnabled = true
+                                settings.domStorageEnabled = true
                                 webViewClient = WebViewClient() // 새 창 뜨지 않게 방지
+                                setOnTouchListener { v, event ->
+                                    v.parent.requestDisallowInterceptTouchEvent(true)
+                                    false
+                                }
+                                layoutParams = ViewGroup.LayoutParams(
+                                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT
+                                )
+                                addJavascriptInterface(webBridge, "AndroidBridge")
                                 loadUrl(viewModel.selectedUrl)
                             }
                         },
-                        update = { /* 갱신 필요 시 처리 */ },
+                        update = { webView ->
+                            webBridge.setData(
+                                token = accessToken,
+                                ids = selectedIds
+                            )
+
+                            if (webView.url != viewModel.selectedUrl && viewModel.selectedUrl.isNotEmpty()) {
+                                webView.loadUrl(viewModel.selectedUrl)
+                            }
+                        },
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(16.dp)
