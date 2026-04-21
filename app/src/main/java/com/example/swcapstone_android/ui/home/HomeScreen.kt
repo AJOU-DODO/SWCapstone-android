@@ -1,15 +1,21 @@
 package com.example.swcapstone_android.ui.home
 
+import android.view.ViewGroup
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -20,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.swcapstone_android.R
+import com.example.swcapstone_android.data.bridge.WebBridge
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -30,6 +37,10 @@ import com.google.maps.android.compose.*
 @OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
+
+    val webBridge = remember { WebBridge() }
+
+    val accessToken by viewModel.accessToken.collectAsState(initial = null)
 
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = false // 반만 펼쳐지는 드래그 가능
@@ -65,7 +76,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
                     state = MarkerState(position = LatLng(pin.latitude, pin.longitude)),
                     icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED),
                     onClick = {
-                        viewModel.onMarkerClick(LatLng(pin.latitude, pin.longitude))
+                        viewModel.onMarkerClick(pin)
                         true
                     }
                 )
@@ -86,6 +97,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
             ModalBottomSheet(
                 onDismissRequest = { viewModel.showBottomSheet = false },
                 sheetState = sheetState,
+                contentWindowInsets = { WindowInsets(0.dp) },
                 containerColor = Color(0xFFFAF7E4), // 이미지와 비슷한 색감
                 dragHandle = { BottomSheetDefaults.DragHandle() } // '...' 부분
             ) {
@@ -101,10 +113,27 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
                             WebView(context).apply {
                                 settings.javaScriptEnabled = true
                                 webViewClient = WebViewClient() // 새 창 뜨지 않게 방지
+                                setOnTouchListener { v, event ->
+                                    v.parent.requestDisallowInterceptTouchEvent(true)
+                                    false
+                                }
+                                layoutParams = ViewGroup.LayoutParams(
+                                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT
+                                )
+                                addJavascriptInterface(webBridge, "AndroidBridge")
                                 loadUrl(viewModel.selectedUrl)
                             }
                         },
-                        update = { /* 갱신 필요 시 처리 */ },
+                        update = { webView ->
+                            webBridge.setData(
+                                token = accessToken,
+                                id = viewModel.selectedNestId
+                            )
+
+                            if (webView.url != viewModel.selectedUrl && viewModel.selectedUrl.isNotEmpty()) {
+                                webView.loadUrl(viewModel.selectedUrl)
+                            }
+                        },
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(16.dp)

@@ -25,6 +25,7 @@ import kotlinx.coroutines.launch
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val tokenManager = TokenManager(application)
+    val accessToken = tokenManager.accessToken
     private val fusedLocationClient = LocationServices.getFusedLocationProviderClient(application)
     // 현재 지도 카메라 상태
     var cameraPositionState by mutableStateOf<CameraPositionState>(CameraPositionState(
@@ -40,14 +41,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     var showBottomSheet by mutableStateOf(false)
 
-    // 선택된 장소의
-    var selectedUrl by mutableStateOf("https://www.google.com")
+    var selectedUrl by mutableStateOf("https://sw-capstone-frontend-kssqdzg42-jeonguihoons-projects.vercel.app\n")
 
-    fun onMarkerClick(position: LatLng) {
-        // 핀을 누르면 호출될 함수
-        selectedUrl = "https://www.google.com" // 지금은 구글로 고정
-        showBottomSheet = true
-    }
+    var selectedNestId by mutableStateOf<Long?>(null)
 
     fun updatePermissionStatus(granted: Boolean) {
         val isChanged = isLocationPermissionGranted != granted
@@ -102,5 +98,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }.addOnFailureListener {
             Log.e("HomeVM", "위치를 가져올 수 없음: ${it.message}")
         }
+    }
+
+    fun onMarkerClick(pin: PinData) {
+        selectedNestId = pin.id // 서버 응답의 id를 nestId로 사용
+        //selectedUrl = "https://sw-capstone-frontend-kssqdzg42-jeonguihoons-projects.vercel.app/nests"
+        selectedUrl = "https://jtm0609.tistory.com/350"
+        showBottomSheet = true
     }
 }
