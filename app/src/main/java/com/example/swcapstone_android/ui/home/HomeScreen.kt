@@ -40,6 +40,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
 
     val webBridge = remember { WebBridge() }
 
+    val selectedIds by viewModel.selectedNestIds.collectAsState()
     val accessToken by viewModel.accessToken.collectAsState(initial = null)
 
     val sheetState = rememberModalBottomSheetState(
@@ -110,8 +111,10 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
                 ) {
                     AndroidView(
                         factory = { context ->
+                            WebView.setWebContentsDebuggingEnabled(true)
                             WebView(context).apply {
                                 settings.javaScriptEnabled = true
+                                settings.domStorageEnabled = true
                                 webViewClient = WebViewClient() // 새 창 뜨지 않게 방지
                                 setOnTouchListener { v, event ->
                                     v.parent.requestDisallowInterceptTouchEvent(true)
@@ -127,7 +130,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
                         update = { webView ->
                             webBridge.setData(
                                 token = accessToken,
-                                id = viewModel.selectedNestId
+                                ids = selectedIds
                             )
 
                             if (webView.url != viewModel.selectedUrl && viewModel.selectedUrl.isNotEmpty()) {

@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.swcapstone_android.BuildConfig
 import com.example.swcapstone_android.data.TokenManager
 import com.example.swcapstone_android.data.model.PinData
 import com.example.swcapstone_android.data.model.TokenData
@@ -20,6 +21,9 @@ import com.google.maps.android.compose.CameraPositionState
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 
@@ -43,7 +47,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     var selectedUrl by mutableStateOf("https://sw-capstone-frontend-kssqdzg42-jeonguihoons-projects.vercel.app\n")
 
-    var selectedNestId by mutableStateOf<Long?>(null)
+    private val _selectedNestIds = MutableStateFlow<List<Long>>(emptyList())
+    val selectedNestIds: StateFlow<List<Long>> = _selectedNestIds.asStateFlow()
 
     fun updatePermissionStatus(granted: Boolean) {
         val isChanged = isLocationPermissionGranted != granted
@@ -101,9 +106,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onMarkerClick(pin: PinData) {
-        selectedNestId = pin.id // 서버 응답의 id를 nestId로 사용
-        //selectedUrl = "https://sw-capstone-frontend-kssqdzg42-jeonguihoons-projects.vercel.app/nests"
-        selectedUrl = "https://jtm0609.tistory.com/350"
+        _selectedNestIds.value = listOf(pin.id) // 서버 응답의 id를 nestId로 사용
+        selectedUrl = "${BuildConfig.WEB_URL}/nests"
+        //selectedUrl = "https://jtm0609.tistory.com/350"
         showBottomSheet = true
     }
 }

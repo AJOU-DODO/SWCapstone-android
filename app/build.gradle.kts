@@ -33,6 +33,9 @@ android {
 
         val baseUrl = properties.getProperty("BASE_URL") ?: ""
         buildConfigField("String", "BASE_URL", "\"$baseUrl\"")
+
+        val webUrl = properties.getProperty("WEB_URL") ?: ""
+        buildConfigField("String", "WEB_URL", "\"$webUrl\"")
     }
 
     buildTypes {
