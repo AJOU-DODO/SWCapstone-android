@@ -45,7 +45,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     var showBottomSheet by mutableStateOf(false)
 
-    var selectedUrl by mutableStateOf("https://sw-capstone-frontend-kssqdzg42-jeonguihoons-projects.vercel.app\n")
+    var selectedUrl by mutableStateOf("${BuildConfig.WEB_URL}/nests")
 
     private val _selectedNestIds = MutableStateFlow<List<Long>>(emptyList())
     val selectedNestIds: StateFlow<List<Long>> = _selectedNestIds.asStateFlow()
@@ -92,12 +92,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             location?.let {
                 Log.d("HomeVM", "내 위치 확인: ${it.latitude}, ${it.longitude}")
 
-                // 1. 카메라를 내 위치로 이동
+                // 카메라를 내 위치로 이동
                 cameraPositionState.position = CameraPosition.fromLatLngZoom(
                     LatLng(it.latitude, it.longitude), 15f
                 )
 
-                // 2. 해당 좌표로 서버에 핀 요청
+                // 해당 좌표로 서버에 핀 요청
                 fetchNearbyPins(it.latitude, it.longitude)
             }
         }.addOnFailureListener {
@@ -106,9 +106,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onMarkerClick(pin: PinData) {
-        _selectedNestIds.value = listOf(pin.id) // 서버 응답의 id를 nestId로 사용
+        _selectedNestIds.value = listOf(pin.id)
         selectedUrl = "${BuildConfig.WEB_URL}/nests"
-        //selectedUrl = "https://jtm0609.tistory.com/350"
         showBottomSheet = true
     }
 }

@@ -44,10 +44,10 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
     val accessToken by viewModel.accessToken.collectAsState(initial = null)
 
     val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = false // 반만 펼쳐지는 드래그 가능
+        skipPartiallyExpanded = false
     )
 
-    // 위치 권한 상태 기억 (Accompanist Permissions 라이브러리)
+    // 위치 권한 상태 기억
     val locationPermissionState = rememberPermissionState(
         android.Manifest.permission.ACCESS_FINE_LOCATION
     )
@@ -84,7 +84,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
             }
         }
 
-        // 상단 바 (DODO 로고)
+        // 상단 바
         HomeTopBar(modifier = Modifier.align(Alignment.TopCenter))
 
         // 하단 버튼들 (알림, 메뉴)
@@ -99,19 +99,19 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
                 onDismissRequest = { viewModel.showBottomSheet = false },
                 sheetState = sheetState,
                 contentWindowInsets = { WindowInsets(0.dp) },
-                containerColor = Color(0xFFFAF7E4), // 이미지와 비슷한 색감
-                dragHandle = { BottomSheetDefaults.DragHandle() } // '...' 부분
+                containerColor = Color(0xFFFAF7E4),
+                dragHandle = { BottomSheetDefaults.DragHandle() }
             ) {
                 // 바텀 시트 내부 내용
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .fillMaxHeight(0.9f) // 화면의 70% 정도 높이까지 올라옴
+                        .fillMaxHeight(0.9f) // 화면의 90% 정도 높이까지 올라옴
                         .padding(bottom = 16.dp)
                 ) {
                     AndroidView(
                         factory = { context ->
-                            WebView.setWebContentsDebuggingEnabled(true)
+                            //WebView.setWebContentsDebuggingEnabled(true) 디버그 필요할때만
                             WebView(context).apply {
                                 settings.javaScriptEnabled = true
                                 settings.domStorageEnabled = true
