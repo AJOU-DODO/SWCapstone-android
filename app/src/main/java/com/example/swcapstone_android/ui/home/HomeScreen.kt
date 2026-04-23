@@ -54,6 +54,9 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
 
     // 화면 진입 시 권한 요청
     LaunchedEffect(locationPermissionState.status.isGranted) {
+        if (!locationPermissionState.status.isGranted) {
+            locationPermissionState.launchPermissionRequest()
+        }
         viewModel.updatePermissionStatus(locationPermissionState.status.isGranted)
     }
 
