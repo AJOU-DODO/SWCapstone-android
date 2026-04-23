@@ -1,5 +1,6 @@
 package com.example.swcapstone_android.ui.home
 
+import android.util.Log
 import android.view.ViewGroup
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -38,7 +39,13 @@ import com.google.maps.android.compose.*
 @Composable
 fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
 
-    val webBridge = remember { WebBridge() }
+    val webBridge = remember {
+        WebBridge(onNestSelected = { id ->
+            // 예: ViewModel의 특정 함수 호출하거나 상태 변경
+            Log.d("Home", "선택된 ID 처리: $id")
+            // 만약 UI 처리가 필요하다면 viewModel.handleSelectedId(id) 호출
+        })
+    }
 
     val selectedIds by viewModel.selectedNestIds.collectAsState()
     val accessToken by viewModel.accessToken.collectAsState(initial = null)

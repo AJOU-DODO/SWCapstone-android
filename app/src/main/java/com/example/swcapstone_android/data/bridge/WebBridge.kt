@@ -4,7 +4,7 @@ import android.util.Log
 import android.webkit.JavascriptInterface
 import org.json.JSONArray
 
-class WebBridge {
+class WebBridge(private val onNestSelected: (Long) -> Unit) {
     private var accessToken: String? = null
     private var nestIds: List<Long> = emptyList()
 
@@ -32,20 +32,10 @@ class WebBridge {
         return jsonArrayString
     }
 
-    /*@JavascriptInterface
-    fun requestInitData() {
-        // 웹이 호출하면 로그가 찍힘
-        Log.d("WebBridge", "웹에서 초기 데이터를 요청함!")
-
-        webView.post {
-            val idsJson = JSONArray(nestIds).toString()
-
-            // 웹의 특정 함수를 호출하거나, 전역 변수에 할당하는 스크립트 실행
-            webView.evaluateJavascript("""
-                if (window.onInitDataReceived) {
-                    window.onInitDataReceived('$accessToken', $idsJson);
-                }
-            """.trimIndent(), null)
-        }
-    }*/
+    @JavascriptInterface
+    fun sendNestIdSelected(id: Long) {
+        Log.d("WebBridge", "웹에서 선택된 Nest ID: $id")
+        // 메인 스레드에서 동작해야 하거나 ViewModel에 알림
+        onNestSelected(id)
+    }
 }

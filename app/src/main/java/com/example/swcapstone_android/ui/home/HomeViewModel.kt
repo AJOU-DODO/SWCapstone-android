@@ -91,7 +91,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             CancellationTokenSource().token
         ).addOnSuccessListener { location ->
             location?.let {
-                Log.d("HomeVM", "내 위치 확인: ${it.latitude}, ${it.longitude}")
+                Log.d("Home", "내 위치 확인: ${it.latitude}, ${it.longitude}")
 
                 // 카메라를 내 위치로 이동
                 cameraPositionState.position = CameraPosition.fromLatLngZoom(
