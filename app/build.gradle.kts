@@ -83,6 +83,7 @@ dependencies {
     implementation(libs.play.services.maps)
     implementation(libs.maps.compose)
     implementation(libs.maps.compose.utils)
+    implementation(libs.android.maps.utils)
     implementation(libs.accompanist.permissions)
     implementation(libs.play.services.location)
     testImplementation(libs.junit)

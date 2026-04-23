@@ -17,6 +17,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -31,19 +32,26 @@ import com.example.swcapstone_android.data.bridge.WebBridge
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
+import com.google.maps.android.compose.clustering.*
+import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class,
+    MapsComposeExperimentalApi::class
+)
 @Composable
 fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
 
+    val scope = rememberCoroutineScope() // 지도 작업에서 추가한 scope 유지
+
     val webBridge = remember {
         WebBridge(onNestSelected = { id ->
-            // 예: ViewModel의 특정 함수 호출하거나 상태 변경
+            // hotfix에서 추가된 리스너 로직 유지
             Log.d("Home", "선택된 ID 처리: $id")
-            // 만약 UI 처리가 필요하다면 viewModel.handleSelectedId(id) 호출
+            // 필요하다면 여기서 viewModel의 함수를 호출하면 돼
         })
     }
 
@@ -73,7 +81,9 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = viewModel.cameraPositionState,
             properties = MapProperties(
-                isMyLocationEnabled = viewModel.isLocationPermissionGranted
+                isMyLocationEnabled = viewModel.isLocationPermissionGranted,
+                minZoomPreference = 14f,
+                maxZoomPreference = 19f
             ),
             onMapClick = { viewModel.showBottomSheet = false },
             uiSettings = MapUiSettings(
@@ -82,16 +92,32 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
             )
         ) {
             // 마커 표시
-            viewModel.markers.forEach { pin ->
-                Marker(
-                    state = MarkerState(position = LatLng(pin.latitude, pin.longitude)),
-                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED),
-                    onClick = {
-                        viewModel.onMarkerClick(pin)
-                        true
+            Clustering(
+                items = viewModel.markers,
+                onClusterItemClick = { pin ->
+                    viewModel.onMarkerClick(pin)
+                    true
+                },
+                onClusterClick = { cluster ->
+                    val currentZoom = viewModel.cameraPositionState.position.zoom
+                    if (currentZoom >= 19f) {
+                        viewModel.onClusterMarkerClick(cluster.items.map { it.id })
+                    } else {
+                        // 직접 줌인 수행
+                        scope.launch {
+                            val targetZoom = (currentZoom + 1.25f).coerceAtMost(19f)
+
+                            viewModel.cameraPositionState.animate(
+                                CameraUpdateFactory.newLatLngZoom(
+                                    cluster.position, // 클릭된 클러스터의 중심 좌표
+                                    targetZoom // 현재보다 1.5단계 더 확대
+                                )
+                            )
+                        }
                     }
-                )
-            }
+                    true // 직접 처리했으므로 true 반환
+                }
+            )
         }
 
         // 상단 바
@@ -100,6 +126,9 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
         // 하단 버튼들 (알림, 메뉴)
         HomeBottomButtons(
             onAlarmClick = { /* 알림 이동 */ },
+            onLocationClick = {
+                viewModel.fetchPinsAtUserLocation()
+            },
             onMenuClick = { /* 메뉴 열기 */ },
             modifier = Modifier.align(Alignment.BottomCenter)
         )
@@ -190,6 +219,7 @@ fun HomeTopBar(modifier: Modifier) {
 fun HomeBottomButtons(
     onAlarmClick: () -> Unit,
     onMenuClick: () -> Unit,
+    onLocationClick: () -> Unit,
     modifier: Modifier
 ) {
     Row(
@@ -208,6 +238,19 @@ fun HomeBottomButtons(
             Icon(
                 painter = painterResource(id = R.drawable.ic_notification),
                 contentDescription = "Notification"
+            )
+        }
+
+        FloatingActionButton(
+            onClick = onLocationClick,
+            containerColor = Color.White, // 강조를 위해 흰색이나 다른 색 추천
+            shape = CircleShape,
+            modifier = Modifier.size(56.dp)
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_my_location), // 위치 아이콘 리소스
+                contentDescription = "My Location",
+                tint = Color(0xFF386641)
             )
         }
 
