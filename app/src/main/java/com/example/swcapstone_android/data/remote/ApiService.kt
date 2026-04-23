@@ -1,5 +1,6 @@
 package com.example.swcapstone_android.data.remote
 
+import com.example.swcapstone_android.data.model.DeviceRequest
 import com.example.swcapstone_android.data.model.MyInfoResponse
 import com.example.swcapstone_android.data.model.PinResponse
 import com.example.swcapstone_android.data.model.PresignedResponse
@@ -41,6 +42,12 @@ interface ApiService {
         @Query("latitude") latitude: Double,
         @Query("longitude") longitude: Double
     ): Response<PinResponse>
+
+    @POST("/api/v1/devices")
+    suspend fun registerDevice(
+        @Header("Authorization") token: String,
+        @Body request: DeviceRequest
+    ): Response<Unit>
 }
 
 // S3 업로드를 위한 별도 인터페이스

@@ -53,6 +53,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     fun updatePermissionStatus(granted: Boolean) {
         val isChanged = isLocationPermissionGranted != granted
         isLocationPermissionGranted = granted
+        Log.d("Home", "위치 권한 확인")
 
         if (isChanged && granted) {
             fetchPinsAtUserLocation()
@@ -70,12 +71,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                     // 기존 마커 비우고 새로 추가
                     markers.clear()
                     response.body()?.data?.let { markers.addAll(it) }
-                    Log.d("HomeVM", "핀 가져오기 성공: ${markers.size}개")
+                    Log.d("Home", "핀 가져오기 성공: ${markers.size}개")
                 } else {
-                    Log.e("HomeVM", "핀 가져오기 실패: ${response.code()}")
+                    Log.e("Home", "핀 가져오기 실패: ${response.code()}")
                 }
             } catch (e: Exception) {
-                Log.e("HomeVM", "네트워크 오류: ${e.message}")
+                Log.e("Home", "네트워크 오류: ${e.message}")
             }
         }
     }
