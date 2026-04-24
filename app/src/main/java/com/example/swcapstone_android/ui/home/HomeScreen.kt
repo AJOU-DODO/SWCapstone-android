@@ -53,7 +53,8 @@ import kotlinx.coroutines.launch
     MapsComposeExperimentalApi::class
 )
 @Composable
-fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
+fun HomeScreen(viewModel: HomeViewModel = viewModel(),
+               onNavigateToSetting: () -> Unit) {
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed) // 기존 Drawer 유지용
     var isMenuExpanded by remember { mutableStateOf(false) }
@@ -150,7 +151,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
                     "글쓰기" -> { /* URL 변경 로직 */ }
                     "카테고리" -> { /* URL 변경 로직 */ }
                     "마이페이지" -> { /* URL 변경 로직 */ }
-                    "설정" -> { /* URL 변경 로직 */ }
+                    "설정" -> onNavigateToSetting()
                 }
             },
             modifier = Modifier.align(Alignment.BottomCenter)
