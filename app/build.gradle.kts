@@ -86,6 +86,7 @@ dependencies {
     implementation(libs.android.maps.utils)
     implementation(libs.accompanist.permissions)
     implementation(libs.play.services.location)
+    implementation(libs.androidx.compose.animation)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

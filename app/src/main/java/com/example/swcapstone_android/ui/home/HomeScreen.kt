@@ -4,20 +4,30 @@ import android.util.Log
 import android.view.ViewGroup
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -44,6 +54,9 @@ import kotlinx.coroutines.launch
 )
 @Composable
 fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
+
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed) // 기존 Drawer 유지용
+    var isMenuExpanded by remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope() // 지도 작업에서 추가한 scope 유지
 
@@ -129,7 +142,17 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
             onLocationClick = {
                 viewModel.fetchPinsAtUserLocation()
             },
-            onMenuClick = { /* 메뉴 열기 */ },
+            onMenuClick = { isMenuExpanded = !isMenuExpanded },
+            isMenuExpanded = isMenuExpanded,
+            onSubMenuClick = { menuLabel ->
+                isMenuExpanded = false // 메뉴 클릭 시 닫기
+                when(menuLabel) {
+                    "글쓰기" -> { /* URL 변경 로직 */ }
+                    "카테고리" -> { /* URL 변경 로직 */ }
+                    "마이페이지" -> { /* URL 변경 로직 */ }
+                    "설정" -> { /* URL 변경 로직 */ }
+                }
+            },
             modifier = Modifier.align(Alignment.BottomCenter)
         )
 
@@ -220,47 +243,81 @@ fun HomeBottomButtons(
     onAlarmClick: () -> Unit,
     onMenuClick: () -> Unit,
     onLocationClick: () -> Unit,
+    onSubMenuClick: (String) -> Unit,
+    isMenuExpanded: Boolean,
     modifier: Modifier
 ) {
-    Row(
+    Box(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp, vertical = 32.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.Bottom
+        contentAlignment = Alignment.BottomCenter
     ) {
+        // 왼쪽: 알림 버튼
         FloatingActionButton(
             onClick = onAlarmClick,
             containerColor = Color(0xFFF1F3E9),
             shape = CircleShape,
-            modifier = Modifier.size(56.dp)
+            modifier = Modifier
+                .size(56.dp)
+                .align(Alignment.BottomStart)
         ) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_notification),
-                contentDescription = "Notification"
-            )
+            Icon(painter = painterResource(id = R.drawable.ic_notification), contentDescription = "Notification")
         }
 
+        // 중앙: 내 위치 버튼
         FloatingActionButton(
             onClick = onLocationClick,
-            containerColor = Color.White, // 강조를 위해 흰색이나 다른 색 추천
+            containerColor = Color.White,
             shape = CircleShape,
-            modifier = Modifier.size(56.dp)
+            modifier = Modifier
+                .size(56.dp)
+                .align(Alignment.BottomCenter)
         ) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_my_location), // 위치 아이콘 리소스
-                contentDescription = "My Location",
-                tint = Color(0xFF386641)
-            )
+            Icon(painter = painterResource(id = R.drawable.ic_my_location), contentDescription = "My Location", tint = Color(0xFF386641))
         }
 
-        FloatingActionButton(
-            onClick = onMenuClick,
-            containerColor = Color(0xFFF1F3E9),
-            shape = CircleShape,
-            modifier = Modifier.size(56.dp)
+        // 오른쪽: 메뉴 버튼 및 확장 메뉴
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.align(Alignment.BottomEnd),
+            verticalArrangement = Arrangement.spacedBy(12.dp) // 버튼 사이 간격
         ) {
-            Icon(Icons.Default.Menu, contentDescription = "Menu")
+            // 확장될 서브 메뉴들
+            val menuItems = listOf("설정", "글쓰기", "마이페이지", "카테고리")
+
+            menuItems.forEachIndexed { index, label ->
+                AnimatedVisibility(
+                    visible = isMenuExpanded,
+                    enter = fadeIn() + expandVertically() + slideInVertically { it / 2 },
+                    exit = fadeOut() + shrinkVertically() + slideOutVertically { it / 2 }
+                ) {
+                    SmallFloatingActionButton(
+                        onClick = { onSubMenuClick(label) },
+                        containerColor = Color(0xFFF1F3E9),
+                        shape = CircleShape,
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        // 아이콘이 없다면 첫 글자만 텍스트로 표시하거나 공용 아이콘 사용
+                        Text(text = label.take(1), color = Color(0xFF386641), fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+
+            // 메인 메뉴 버튼
+            FloatingActionButton(
+                onClick = onMenuClick,
+                containerColor = if (isMenuExpanded) Color(0xFF386641) else Color(0xFFF1F3E9),
+                contentColor = if (isMenuExpanded) Color.White else Color.Black,
+                shape = CircleShape,
+                modifier = Modifier.size(56.dp)
+            ) {
+                // 확장 상태에 따라 아이콘 변경 (X 모양 등)
+                Icon(
+                    if (isMenuExpanded) Icons.Default.Close else Icons.Default.Menu,
+                    contentDescription = "Menu"
+                )
+            }
         }
     }
 }
