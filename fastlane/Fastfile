@@ -24,7 +24,7 @@ platform :android do
     gradle(
   task: "assembleDebug",
   properties: {
-    "android.injected.signing.store.file" => "../debug.keystore",
+    "android.injected.signing.store.file" => File.expand_path("../debug.keystore"),
     "android.injected.signing.store.password" => "android",
     "android.injected.signing.key.alias" => "androiddebugkey",
     "android.injected.signing.key.password" => "android"
