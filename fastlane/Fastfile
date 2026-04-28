@@ -21,7 +21,15 @@ platform :android do
 
   lane :distribute do
 
-    gradle(task: "assembleDebug")
+    gradle(
+  task: "assembleDebug",
+  properties: {
+    "android.injected.signing.store.file" => "../debug.keystore",
+    "android.injected.signing.store.password" => "android",
+    "android.injected.signing.key.alias" => "androiddebugkey",
+    "android.injected.signing.key.password" => "android"
+  }
+)
 
     
 

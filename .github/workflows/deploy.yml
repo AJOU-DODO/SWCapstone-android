@@ -36,6 +36,9 @@ jobs:
       - name: Install Fastlane Plugins
         run: bundle exec fastlane install_plugins
 
+      - name: Decode Keystore
+        run: echo "${{ secrets.DEBUG_KEYSTORE_BASE64 }}" | base64 -d > debug.keystore
+
       - name: Build and Distribute
         run: bundle exec fastlane distribute
         env:
