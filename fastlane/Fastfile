@@ -29,7 +29,7 @@ platform :android do
 
         app: "1:330382477506:android:dd3c205a778c5ffa7c535b",
 
-        groups: "testers",
+        groups: "dodo app tester",
 
         # ENV["FIREBASE_TOKEN"]은 GitHub Secrets에서 자동으로 가져올 거야
 
