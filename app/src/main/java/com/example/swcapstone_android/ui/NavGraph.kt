@@ -17,6 +17,8 @@ import com.example.swcapstone_android.ui.setting.SettingViewModel
 import com.example.swcapstone_android.ui.splash.SplashViewModel
 import com.example.swcapstone_android.ui.userdetail.UserDetailScreen
 import com.example.swcapstone_android.ui.userdetail.UserDetailViewModel
+import com.example.swcapstone_android.ui.write.WriteScreen
+import com.example.swcapstone_android.ui.write.WriteViewModel
 import kotlinx.coroutines.launch
 
 @Composable
@@ -68,6 +70,9 @@ fun NavGraph(modifier: Modifier = Modifier, navController: NavHostController){
             HomeScreen(
                 onNavigateToSetting = {
                     navController.navigate("setting") // Screen 클래스에 정의했다면 Screen.SettingScreen.route
+                },
+                onNavigateToWrite = {
+                    navController.navigate("write")
                 }
             )
         }
@@ -79,6 +84,14 @@ fun NavGraph(modifier: Modifier = Modifier, navController: NavHostController){
                     navController.popBackStack() // 뒤로가기
                 },
                 viewModel = settingViewModel
+            )
+        }
+
+        composable("write") {
+            val writeViewModel: WriteViewModel = viewModel()
+            WriteScreen(
+                onBackClick = { navController.popBackStack() },
+                viewModel = writeViewModel
             )
         }
     }

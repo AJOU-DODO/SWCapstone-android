@@ -54,7 +54,8 @@ import kotlinx.coroutines.launch
 )
 @Composable
 fun HomeScreen(viewModel: HomeViewModel = viewModel(),
-               onNavigateToSetting: () -> Unit) {
+               onNavigateToSetting: () -> Unit,
+               onNavigateToWrite: () -> Unit) {
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed) // 기존 Drawer 유지용
     var isMenuExpanded by remember { mutableStateOf(false) }
@@ -148,7 +149,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
             onSubMenuClick = { menuLabel ->
                 isMenuExpanded = false // 메뉴 클릭 시 닫기
                 when(menuLabel) {
-                    "글쓰기" -> { /* URL 변경 로직 */ }
+                    "글쓰기" -> onNavigateToWrite()
                     "카테고리" -> { /* URL 변경 로직 */ }
                     "마이페이지" -> { /* URL 변경 로직 */ }
                     "설정" -> onNavigateToSetting()
