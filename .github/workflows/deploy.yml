@@ -1,0 +1,32 @@
+name: Android CI/CD
+
+on:
+  push:
+    branches: [ "main", "feat/17/distribution" ] # 테스트를 위해 현재 브랜치도 추가!
+
+jobs:
+  distribute:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4 # 최신 버전인 v4 권장
+
+      - name: set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2' # 아까 설치한 버전과 맞춤
+          bundler-cache: true
+
+      - name: Install Fastlane Plugins
+        run: bundle exec fastlane install_plugins
+
+      - name: Build and Distribute
+        run: bundle exec fastlane distribute
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
