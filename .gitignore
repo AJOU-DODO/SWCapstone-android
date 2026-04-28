@@ -14,3 +14,14 @@
 .cxx
 local.properties
 app/google-services.json
+# Fastlane 관련
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+fastlane/gc_keys.json
+
+# Ruby 관련
+.bundle/
+vendor/bundle/
+Gemfile.lock

@@ -15,6 +15,7 @@ import com.example.swcapstone_android.data.TokenManager
 import com.example.swcapstone_android.data.model.PinData
 import com.example.swcapstone_android.data.model.TokenData
 import com.example.swcapstone_android.data.remote.RetrofitClient
+import com.example.swcapstone_android.util.GeofenceManager
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.CameraPositionState
@@ -28,6 +29,8 @@ import kotlinx.coroutines.launch
 
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val geofenceManager = GeofenceManager(application)
     private val tokenManager = TokenManager(application)
     val accessToken = tokenManager.accessToken
     private val fusedLocationClient = LocationServices.getFusedLocationProviderClient(application)
@@ -95,7 +98,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
                 // 카메라를 내 위치로 이동
                 cameraPositionState.position = CameraPosition.fromLatLngZoom(
-                    LatLng(it.latitude, it.longitude), 15f
+                    LatLng(it.latitude, it.longitude), 17.5f
                 )
 
                 // 해당 좌표로 서버에 핀 요청
@@ -110,5 +113,15 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         _selectedNestIds.value = listOf(pin.id)
         selectedUrl = "${BuildConfig.WEB_URL}/nests"
         showBottomSheet = true
+    }
+
+    fun onClusterMarkerClick(ids: List<Long>) {
+        _selectedNestIds.value = ids
+        selectedUrl = "${BuildConfig.WEB_URL}/nests" // 여러 개일 때 리스트를 보여줄 페이지
+        showBottomSheet = true
+    }
+
+    fun registerGeofence(id: String, lat: Double, lng: Double) {
+        geofenceManager.addGeofence(id, lat, lng)
     }
 }

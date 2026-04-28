@@ -12,6 +12,8 @@ import androidx.navigation.compose.composable
 import com.example.swcapstone_android.ui.home.HomeScreen
 import com.example.swcapstone_android.ui.login.LoginScreen
 import com.example.swcapstone_android.ui.login.LoginViewModel
+import com.example.swcapstone_android.ui.setting.SettingScreen
+import com.example.swcapstone_android.ui.setting.SettingViewModel
 import com.example.swcapstone_android.ui.splash.SplashViewModel
 import com.example.swcapstone_android.ui.userdetail.UserDetailScreen
 import com.example.swcapstone_android.ui.userdetail.UserDetailViewModel
@@ -63,7 +65,21 @@ fun NavGraph(modifier: Modifier = Modifier, navController: NavHostController){
         }
 
         composable(Screen.HomeScreen.route) {
-            HomeScreen()
+            HomeScreen(
+                onNavigateToSetting = {
+                    navController.navigate("setting") // Screen 클래스에 정의했다면 Screen.SettingScreen.route
+                }
+            )
+        }
+
+        composable("setting") {
+            val settingViewModel: SettingViewModel = viewModel()
+            SettingScreen(
+                onBackClick = {
+                    navController.popBackStack() // 뒤로가기
+                },
+                viewModel = settingViewModel
+            )
         }
     }
 }
