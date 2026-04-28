@@ -24,6 +24,9 @@ jobs:
           echo "MAPS_API_KEY=${{ secrets.MAPS_API_KEY }}" >> local.properties
           echo "WEB_URL=${{ secrets.WEB_URL }}" >> local.properties
 
+      - name: Create google-services.json
+        run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > app/google-services.json
+
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
