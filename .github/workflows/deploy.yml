@@ -2,13 +2,13 @@ name: Android CI/CD
 
 on:
   push:
-    branches: [ "main", "feat/17/distribution" ] # 테스트를 위해 현재 브랜치도 추가!
+    branches: [ "main", "feat/17/distribution" ]
 
 jobs:
   distribute:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4 # 최신 버전인 v4 권장
+      - uses: actions/checkout@v4
 
       - name: set up JDK 17
         uses: actions/setup-java@v4
@@ -17,10 +17,17 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
+      - name: Create local.properties
+        run: |
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          echo "BASE_URL=${{ secrets.BASE_URL }}" >> local.properties
+          echo "MAPS_API_KEY=${{ secrets.MAPS_API_KEY }}" >> local.properties
+          echo "WEB_URL=${{ secrets.WEB_URL }}" >> local.properties
+
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.2' # 아까 설치한 버전과 맞춤
+          ruby-version: '4.0.3'
           bundler-cache: true
 
       - name: Install Fastlane Plugins
@@ -30,3 +37,6 @@ jobs:
         run: bundle exec fastlane distribute
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          BASE_URL: ${{ secrets.BASE_URL }}
+          MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
+          WEB_URL: ${{ secrets.WEB_URL }}
