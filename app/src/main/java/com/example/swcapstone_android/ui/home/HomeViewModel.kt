@@ -124,4 +124,22 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     fun registerGeofence(id: String, lat: Double, lng: Double) {
         geofenceManager.addGeofence(id, lat, lng)
     }
+
+    @SuppressLint("MissingPermission")
+    fun getActualLocation(onLocationRetrieved: (LatLng) -> Unit) {
+        if (!isLocationPermissionGranted) return
+
+        fusedLocationClient.getCurrentLocation(
+            Priority.PRIORITY_HIGH_ACCURACY,
+            CancellationTokenSource().token
+        ).addOnSuccessListener { location ->
+            location?.let {
+                onLocationRetrieved(LatLng(it.latitude, it.longitude))
+            }
+        }.addOnFailureListener {
+            Log.e("HomeVM", "현재 위치를 가져오지 못했습니다: ${it.message}")
+            // 위치를 못 가져올 경우를 대비해 지도 중심점이라도 반환하는 백업 로직
+            onLocationRetrieved(cameraPositionState.position.target)
+        }
+    }
 }
