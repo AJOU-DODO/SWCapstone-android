@@ -87,46 +87,50 @@ fun WriteScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-        ) {
-            AndroidView(
-                factory = { context ->
-                    WebView(context).apply {
-                        webViewRef = this
-                        layoutParams = ViewGroup.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.MATCH_PARENT
-                        )
-                        settings.apply {
-                            javaScriptEnabled = true      // 자바스크립트 허용
-                            domStorageEnabled = true       // 로컬 스토리지 허용
-                            allowFileAccess = true        // 파일 접근 허용
-                            mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-                        }
-
-                        addJavascriptInterface(webBridge, "AndroidBridge")
-
-                        webViewClient = object : WebViewClient() {
-                            override fun onPageFinished(view: WebView?, url: String?) {
-                                super.onPageFinished(view, url)
-                                viewModel.updateLoading(false) // 로딩 바 숨기기
+        )
+        {
+            if (accessToken != null) {
+                AndroidView(
+                    factory = { context ->
+                        WebView(context).apply {
+                            webViewRef = this
+                            layoutParams = ViewGroup.LayoutParams(
+                                ViewGroup.LayoutParams.MATCH_PARENT,
+                                ViewGroup.LayoutParams.MATCH_PARENT
+                            )
+                            settings.apply {
+                                javaScriptEnabled = true      // 자바스크립트 허용
+                                domStorageEnabled = true       // 로컬 스토리지 허용
+                                allowFileAccess = true        // 파일 접근 허용
+                                mixedContentMode =
+                                    android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
                             }
+
+                            addJavascriptInterface(webBridge, "AndroidBridge")
+
+                            webViewClient = object : WebViewClient() {
+                                override fun onPageFinished(view: WebView?, url: String?) {
+                                    super.onPageFinished(view, url)
+                                    viewModel.updateLoading(false) // 로딩 바 숨기기
+                                }
+                            }
+
+                            loadUrl(viewModel.writeUrl)
                         }
+                    },
+                    update = {
 
-                        loadUrl(viewModel.writeUrl)
-                    }
-                },
-                update = {
-
-                },
-                modifier = Modifier.fillMaxSize()
-            )
-
-            // 로딩 중일 때 중앙에 프로그레스 바 표시
-            if (viewModel.isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center),
-                    color = Color(0xFF386641)
+                    },
+                    modifier = Modifier.fillMaxSize()
                 )
+
+                // 로딩 중일 때 중앙에 프로그레스 바 표시
+                if (viewModel.isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center),
+                        color = Color(0xFF386641)
+                    )
+                }
             }
         }
     }

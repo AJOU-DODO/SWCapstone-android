@@ -37,7 +37,7 @@ class WriteBridge(
     }
 
     @JavascriptInterface
-    fun requestImage() {
+    fun requestImageUpload() {
         onImageRequest()
     }
 
