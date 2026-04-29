@@ -101,9 +101,8 @@ fun WriteScreen(
                             settings.apply {
                                 javaScriptEnabled = true      // 자바스크립트 허용
                                 domStorageEnabled = true       // 로컬 스토리지 허용
-                                allowFileAccess = true        // 파일 접근 허용
-                                mixedContentMode =
-                                    android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+                                allowFileAccess = false
+                                mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
                             }
 
                             addJavascriptInterface(webBridge, "AndroidBridge")

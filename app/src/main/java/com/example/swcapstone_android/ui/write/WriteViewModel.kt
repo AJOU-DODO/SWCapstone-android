@@ -46,21 +46,16 @@ class WriteViewModel(application: Application) : AndroidViewModel(application) {
     fun handleImageSelection(context: android.content.Context, uri: android.net.Uri) {
         viewModelScope.launch(Dispatchers.IO) { // 백그라운드 스레드에서 처리
             try {
-                val inputStream = context.contentResolver.openInputStream(uri)
-                val bitmap = BitmapFactory.decodeStream(inputStream)
-
-                // 1. 이미지 압축 (성능과 전송 속도를 위해 필수)
-                val outputStream = ByteArrayOutputStream()
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 60, outputStream)
-                val byteArray = outputStream.toByteArray()
-
-                // 2. Base64 변환
-                val base64String = Base64.encodeToString(byteArray, Base64.NO_WRAP)
-                val dataUri = "data:image/jpeg;base64,$base64String"
-
-                // 3. 웹뷰 JS 호출 명령어 준비 (메인 스레드에서 UI 업데이트)
+                val dataUri = context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                    val bitmap = BitmapFactory.decodeStream(inputStream) ?: return@use null
+                    val outputStream = ByteArrayOutputStream()
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 60, outputStream)
+                    bitmap.recycle()
+                    val base64String = Base64.encodeToString(outputStream.toByteArray(), Base64.NO_WRAP)
+                    "data:image/jpeg;base64,$base64String"
+                } ?: return@launch
                 withContext(Dispatchers.Main) {
-                    _jsCommand.value = "javascript:window.onImageReceived('$dataUri')"
+                    _jsCommand.value = "window.onImageReceived('$dataUri')"
                 }
             } catch (e: Exception) {
                 Log.e("WriteVM", "이미지 변환 실패: ${e.message}")
