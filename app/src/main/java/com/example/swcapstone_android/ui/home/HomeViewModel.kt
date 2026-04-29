@@ -21,6 +21,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.CameraPositionState
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.tasks.CancellationTokenSource
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -52,6 +53,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _selectedNestIds = MutableStateFlow<List<Long>>(emptyList())
     val selectedNestIds: StateFlow<List<Long>> = _selectedNestIds.asStateFlow()
+
+    var selectedPinId by mutableStateOf<Long?>(null)
+        private set
 
     fun updatePermissionStatus(granted: Boolean) {
         val isChanged = isLocationPermissionGranted != granted
@@ -140,6 +144,20 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             Log.e("HomeVM", "현재 위치를 가져오지 못했습니다: ${it.message}")
             // 위치를 못 가져올 경우를 대비해 지도 중심점이라도 반환하는 백업 로직
             onLocationRetrieved(cameraPositionState.position.target)
+        }
+    }
+
+    fun selectPin(id: Long) {
+        selectedPinId = id
+        showBottomSheet = false // 바텀시트 닫기
+
+        // 해당 핀 위치로 카메라 이동 (선택 사항)
+        markers.find { it.id == id }?.let { pin ->
+            viewModelScope.launch {
+                cameraPositionState.animate(
+                    CameraUpdateFactory.newLatLngZoom(pin.position, 17.5f)
+                )
+            }
         }
     }
 }
