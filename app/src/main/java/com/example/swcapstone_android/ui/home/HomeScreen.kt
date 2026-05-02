@@ -54,7 +54,8 @@ import kotlinx.coroutines.launch
 )
 @Composable
 fun HomeScreen(viewModel: HomeViewModel = viewModel(),
-               onNavigateToSetting: () -> Unit) {
+               onNavigateToSetting: () -> Unit,
+               onNavigateToWrite: (Double, Double) -> Unit) {
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed) // 기존 Drawer 유지용
     var isMenuExpanded by remember { mutableStateOf(false) }
@@ -63,6 +64,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
 
     val webBridge = remember {
         WebBridge(onNestSelected = { id ->
+            viewModel.selectPin(id)
             // hotfix에서 추가된 리스너 로직 유지
             Log.d("Home", "선택된 ID 처리: $id")
             // 필요하다면 여기서 viewModel의 함수를 호출하면 돼
@@ -132,6 +134,15 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                     true // 직접 처리했으므로 true 반환
                 }
             )
+
+            viewModel.markers.find { it.id == viewModel.selectedPinId }?.let { selectedPin ->
+                Marker(
+                    state = MarkerState(position = selectedPin.position),
+                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN),
+                    title = selectedPin.title,
+                    zIndex = 1f // 다른 마커들보다 위에 보이게 설정
+                )
+            }
         }
 
         // 상단 바
@@ -148,7 +159,11 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
             onSubMenuClick = { menuLabel ->
                 isMenuExpanded = false // 메뉴 클릭 시 닫기
                 when(menuLabel) {
-                    "글쓰기" -> { /* URL 변경 로직 */ }
+                    "글쓰기" -> {
+                        viewModel.getActualLocation { actualLatLng ->
+                            onNavigateToWrite(actualLatLng.latitude, actualLatLng.longitude)
+                        }
+                }
                     "카테고리" -> { /* URL 변경 로직 */ }
                     "마이페이지" -> { /* URL 변경 로직 */ }
                     "설정" -> onNavigateToSetting()
