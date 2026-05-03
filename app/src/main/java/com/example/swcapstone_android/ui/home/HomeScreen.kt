@@ -65,9 +65,12 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
     val webBridge = remember {
         WebBridge(onNestSelected = { id ->
             viewModel.selectPin(id)
-            // hotfix에서 추가된 리스너 로직 유지
-            Log.d("Home", "선택된 ID 처리: $id")
-            // 필요하다면 여기서 viewModel의 함수를 호출하면 돼
+
+            viewModel.markers.find { it.id == id }?.let { pin ->
+                viewModel.registerGeofence(pin.id.toString(), pin.position.latitude, pin.position.longitude)
+
+                viewModel.startTracking()
+            }
         })
     }
 

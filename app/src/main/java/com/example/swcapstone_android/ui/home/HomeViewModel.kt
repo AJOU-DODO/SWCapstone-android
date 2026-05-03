@@ -16,6 +16,9 @@ import com.example.swcapstone_android.data.model.PinData
 import com.example.swcapstone_android.data.model.TokenData
 import com.example.swcapstone_android.data.remote.RetrofitClient
 import com.example.swcapstone_android.util.GeofenceManager
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.CameraPositionState
@@ -30,6 +33,13 @@ import kotlinx.coroutines.launch
 
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
+
+    var distanceToSelectedPin by mutableStateOf<Int?>(null)
+        private set
+
+    private val locationRequest = LocationRequest.Builder(
+        Priority.PRIORITY_HIGH_ACCURACY, 3000L // 3초마다 업데이트
+    ).build()
 
     private val geofenceManager = GeofenceManager(application)
     private val tokenManager = TokenManager(application)
@@ -56,6 +66,27 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     var selectedPinId by mutableStateOf<Long?>(null)
         private set
+    private val locationCallback = object : LocationCallback() {
+        override fun onLocationResult(result: LocationResult) {
+            val userLocation = result.lastLocation ?: return
+
+            // 선택된 핀이 있을 때만 거리 계산
+            selectedPinId?.let { id ->
+                markers.find { it.id == id }?.let { pin ->
+                    val pinLocation = android.location.Location("").apply {
+                        latitude = pin.position.latitude
+                        longitude = pin.position.longitude
+                    }
+                    val distance = userLocation.distanceTo(pinLocation)
+
+                    // 10m 단위로 끊어서 업데이트 (예: 28m -> 20m)
+                    distanceToSelectedPin = (distance.toInt() / 10) * 10
+                }
+            } ?: run {
+                distanceToSelectedPin = null // 선택된 핀 없으면 거리 안 띄움
+            }
+        }
+    }
 
     fun updatePermissionStatus(granted: Boolean) {
         val isChanged = isLocationPermissionGranted != granted
@@ -159,5 +190,14 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 )
             }
         }
+    }
+
+    @SuppressLint("MissingPermission")
+    fun startTracking() {
+        fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null)
+    }
+
+    fun stopTracking() {
+        fusedLocationClient.removeLocationUpdates(locationCallback)
     }
 }
