@@ -148,6 +148,25 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
             }
         }
 
+        viewModel.distanceToSelectedPin?.let { distance ->
+            Surface(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 84.dp), // 상단 바(64dp)보다 아래에 위치하도록 조절
+                color = if (distance <= 10) Color(0xFFE53935) else Color(0xFF386641),
+                shape = CircleShape,
+                shadowElevation = 4.dp
+            ) {
+                Text(
+                    text = if (distance <= 10) "둥지에 도착했습니다!" else "목적지까지 약 ${distance}m",
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp
+                )
+            }
+        }
+
         // 상단 바
         HomeTopBar(modifier = Modifier.align(Alignment.TopCenter))
 
