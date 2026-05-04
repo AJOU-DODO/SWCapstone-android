@@ -37,6 +37,11 @@ class WriteViewModel(application: Application) : AndroidViewModel(application) {
     var isLoading by mutableStateOf(true)
         private set
 
+    var showPublishConfirm by mutableStateOf(false)
+        private set
+    var publishRadius by mutableStateOf(0)
+        private set
+
     fun updateLoading(loading: Boolean) {
         isLoading = loading
     }
@@ -61,5 +66,19 @@ class WriteViewModel(application: Application) : AndroidViewModel(application) {
                 Log.e("WriteVM", "이미지 변환 실패: ${e.message}")
             }
         }
+    }
+
+    fun requestPublication(radius: Int) {
+        publishRadius = radius
+        showPublishConfirm = true
+    }
+
+    fun dismissConfirm() {
+        showPublishConfirm = false
+    }
+
+    fun sendApproveToWeb() {
+        _jsCommand.value = "window.getApprove()"
+        showPublishConfirm = false
     }
 }

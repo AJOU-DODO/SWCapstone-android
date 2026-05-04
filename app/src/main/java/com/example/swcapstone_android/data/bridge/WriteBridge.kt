@@ -6,7 +6,8 @@ import org.json.JSONObject
 
 class WriteBridge(
     private val onImageRequest: () -> Unit,
-    private val onPublishRequest: (String) -> Unit
+    private val onPublishRequest: (Int) -> Unit,
+    private val onApproveConfirm: () -> Unit
 ) {
     private var accessToken: String? = null
     private var lat: Double = 0.0
@@ -42,7 +43,8 @@ class WriteBridge(
     }
 
     @JavascriptInterface
-    fun publish(data: String) {
-        onPublishRequest(data)
+    fun requestPublication(radius: Int) {
+        Log.d("WriteBridge", "발행 요청됨 - 반경: ${radius}m")
+        onPublishRequest(radius)
     }
 }
