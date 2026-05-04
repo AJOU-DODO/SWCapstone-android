@@ -73,6 +73,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                     lat = selectedPin.position.latitude,
                     lng = selectedPin.position.longitude
                 )
+                viewModel.startTracking()
                 Log.d("Home", "지오펜스 등록 호출: ${selectedPin.title}")
             }
             // hotfix에서 추가된 리스너 로직 유지
@@ -151,6 +152,25 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                     icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN),
                     title = selectedPin.title,
                     zIndex = 1f // 다른 마커들보다 위에 보이게 설정
+                )
+            }
+        }
+
+        viewModel.distanceToSelectedPin?.let { distance ->
+            Surface(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 84.dp), // 상단 바(64dp)보다 아래에 위치하도록 조절
+                color = if (distance <= 10) Color(0xFFE53935) else Color(0xFF386641),
+                shape = CircleShape,
+                shadowElevation = 4.dp
+            ) {
+                Text(
+                    text = if (distance <= 10) "둥지에 도착했습니다!" else "목적지까지 약 ${distance}m",
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp
                 )
             }
         }
