@@ -7,6 +7,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -24,9 +25,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.swcapstone_android.data.bridge.WriteBridge
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.Circle
+import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.maps.android.compose.MapUiSettings
+import com.google.android.gms.maps.model.LatLng
+
 
 @SuppressLint("SetJavaScriptEnabled")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -53,13 +65,13 @@ fun WriteScreen(
     val webBridge = remember {
         WriteBridge(
             onImageRequest = { galleryLauncher.launch("image/*") },
-            onPublishRequest = { data -> /* 발행 로직 나중에 */ }
+            onPublishRequest = { radius -> viewModel.requestPublication(radius) }
         )
     }
 
     LaunchedEffect(viewModel.jsCommand) {
         viewModel.jsCommand?.let { command ->
-            webViewRef?.loadUrl(command)
+            webViewRef?.evaluateJavascript(command, null)
             viewModel.clearJsCommand()
         }
     }
@@ -122,14 +134,73 @@ fun WriteScreen(
                     },
                     modifier = Modifier.fillMaxSize()
                 )
+            }
+            if (viewModel.showPublishConfirm) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.6f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth(0.9f)
+                            .fillMaxHeight(0.7f),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(8.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text("이 위치에 발행할까요?", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                            Text("설정한 반경: ${viewModel.publishRadius}m", fontSize = 14.sp, color = Color.Gray)
 
-                // 로딩 중일 때 중앙에 프로그레스 바 표시
-                if (viewModel.isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center),
-                        color = Color(0xFF386641)
-                    )
+                            // 지도 미리보기 영역
+                            Box(modifier = Modifier.weight(1f).padding(vertical = 12.dp)) {
+                                GoogleMap(
+                                    modifier = Modifier.fillMaxSize(),
+                                    cameraPositionState = rememberCameraPositionState {
+                                        position = CameraPosition.fromLatLngZoom(LatLng(lat, lng), 17f)
+                                    },
+                                    uiSettings = MapUiSettings(zoomControlsEnabled = false)
+                                ) {
+                                    // 중앙 마커
+                                    val markerState = remember { MarkerState(position = LatLng(lat, lng)) }
+                                    Marker(state = markerState)
+                                    // 실제 해금 범위 원형 표시
+                                    Circle(
+                                        center = LatLng(lat, lng),
+                                        radius = viewModel.publishRadius.toDouble(),
+                                        fillColor = Color(0x33386641), // 연한 초록색 채우기
+                                        strokeColor = Color(0xFF386641), // 진한 초록색 테두리
+                                        strokeWidth = 2f
+                                    )
+                                }
+                            }
+
+                            // 버튼 레이아웃
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                OutlinedButton(
+                                    onClick = { viewModel.dismissConfirm() }, // 아니오 -> 그냥 닫기
+                                    modifier = Modifier.weight(1f)
+                                ) { Text("아니오") }
+
+                                Button(
+                                    onClick = { viewModel.sendApproveToWeb() }, // 예 -> window.getApprove() 실행
+                                    modifier = Modifier.weight(1f),
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF386641))
+                                ) { Text("예") }
+                            }
+                        }
+                    }
                 }
+            }
+            if (viewModel.isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center),
+                    color = Color(0xFF386641)
+                )
             }
         }
     }

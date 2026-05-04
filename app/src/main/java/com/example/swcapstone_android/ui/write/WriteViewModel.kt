@@ -54,13 +54,15 @@ class WriteViewModel(application: Application) : AndroidViewModel(application) {
                 val dataUri = context.contentResolver.openInputStream(uri)?.use { inputStream ->
                     val bitmap = BitmapFactory.decodeStream(inputStream) ?: return@use null
                     val outputStream = ByteArrayOutputStream()
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 60, outputStream)
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 40, outputStream)
                     bitmap.recycle()
                     val base64String = Base64.encodeToString(outputStream.toByteArray(), Base64.NO_WRAP)
                     "data:image/jpeg;base64,$base64String"
                 } ?: return@launch
                 withContext(Dispatchers.Main) {
-                    _jsCommand.value = "window.onImageReceived('$dataUri')"
+                    val script = "window.onImageReceived('$dataUri')"
+                    _jsCommand.value = script
+                    Log.d("WriteVM", "전달할 스크립트 길이: ${script.length}")
                 }
             } catch (e: Exception) {
                 Log.e("WriteVM", "이미지 변환 실패: ${e.message}")

@@ -25,6 +25,7 @@ accompanistPermissions = "0.34.0"
 playServicesLocation = "21.2.0"
 android-maps-utils = "3.5.3"
 animation = "1.11.0"
+foundationVersion = "1.11.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -63,6 +64,7 @@ accompanist-permissions = { group = "com.google.accompanist", name = "accompanis
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 android-maps-utils = { group = "com.google.maps.android", name = "android-maps-utils", version.ref = "android-maps-utils" }
 androidx-compose-animation = { group = "androidx.compose.animation", name = "animation", version.ref = "animation" }
+androidx-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundationVersion" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

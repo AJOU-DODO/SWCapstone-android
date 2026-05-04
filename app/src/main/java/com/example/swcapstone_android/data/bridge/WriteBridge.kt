@@ -6,8 +6,7 @@ import org.json.JSONObject
 
 class WriteBridge(
     private val onImageRequest: () -> Unit,
-    private val onPublishRequest: (Int) -> Unit,
-    private val onApproveConfirm: () -> Unit
+    private val onPublishRequest: (Int) -> Unit
 ) {
     private var accessToken: String? = null
     private var lat: Double = 0.0
@@ -39,6 +38,7 @@ class WriteBridge(
 
     @JavascriptInterface
     fun requestImageUpload() {
+        Log.d("WriteBridge", "사진 요청")
         onImageRequest()
     }
 
