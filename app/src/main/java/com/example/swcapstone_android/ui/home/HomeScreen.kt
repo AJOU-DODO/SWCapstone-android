@@ -55,7 +55,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                onNavigateToSetting: () -> Unit,
-               onNavigateToWrite: (Double, Double) -> Unit) {
+               onNavigateToWrite: (Double, Double) -> Unit,
+               initialSelectedNestId: String? = null) {
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed) // 기존 Drawer 유지용
     var isMenuExpanded by remember { mutableStateOf(false) }
@@ -74,7 +75,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                     lng = selectedPin.position.longitude
                 )
                 viewModel.startTracking()
-                Log.d("Home", "지오펜스 등록 호출: ${selectedPin.title}")
+                Log.d("Home", "지오펜스 등록 호출: ${selectedPin.id}")
             }
             // hotfix에서 추가된 리스너 로직 유지
             Log.d("Home", "선택된 ID 처리: $id")
@@ -95,7 +96,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
     )
 
     // 화면 진입 시 권한 요청
-    LaunchedEffect(locationPermissionState.status.isGranted) {
+    LaunchedEffect(locationPermissionState.status.isGranted, viewModel.markers, initialSelectedNestId) {
         if (!locationPermissionState.status.isGranted) {
             locationPermissionState.launchPermissionRequest()
         }
@@ -173,6 +174,9 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                     fontSize = 14.sp
                 )
             }
+            if (distance <= 10)
+                viewModel.stopTracking()
+            Log.d("Home", "지오펜스 해제 완료")
         }
 
         // 상단 바
