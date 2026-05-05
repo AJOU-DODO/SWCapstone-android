@@ -20,7 +20,7 @@ import com.example.swcapstone_android.ui.userdetail.UserDetailScreen
 import com.example.swcapstone_android.ui.userdetail.UserDetailViewModel
 import com.example.swcapstone_android.ui.write.WriteScreen
 import com.example.swcapstone_android.ui.write.WriteViewModel
-import kotlinx.coroutines.launch
+import com.example.swcapstone_android.ui.unlock.UnlockScreen
 
 @Composable
 fun NavGraph(
@@ -92,6 +92,9 @@ fun NavGraph(
                 },
                 onNavigateToWrite = { lat, lng ->
                     navController.navigate("write/$lat/$lng")
+                },
+                onNavigateToUnlock = { id ->
+                    navController.navigate("unlock/$id")
                 }
             )
         }
@@ -117,6 +120,15 @@ fun NavGraph(
                 lng = lng,
                 viewModel = writeViewModel
             )
+        }
+
+        composable("unlock/{nestId}") { backStackEntry ->
+            val nestId = backStackEntry.arguments?.getString("nestId")?.toLong() ?: 0L
+
+             UnlockScreen(
+                 nestId = nestId,
+                 onFinished = { navController.popBackStack() }
+             )
         }
     }
 }

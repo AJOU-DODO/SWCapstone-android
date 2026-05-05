@@ -15,6 +15,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -56,6 +57,7 @@ import kotlinx.coroutines.launch
 fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                onNavigateToSetting: () -> Unit,
                onNavigateToWrite: (Double, Double) -> Unit,
+               onNavigateToUnlock: (Long) -> Unit,
                initialSelectedNestId: String? = null) {
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed) // 기존 Drawer 유지용
@@ -94,6 +96,15 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
     val locationPermissionState = rememberPermissionState(
         android.Manifest.permission.ACCESS_FINE_LOCATION
     )
+
+    val unlockNestId by viewModel.navigateToUnlock.collectAsState()
+
+    LaunchedEffect(unlockNestId) {
+        unlockNestId?.let { id ->
+            onNavigateToUnlock(id)
+            viewModel.onUnlockNavigated() // 중복 이동 방지 위해 리셋
+        }
+    }
 
     // 화면 진입 시 권한 요청
     LaunchedEffect(locationPermissionState.status.isGranted, viewModel.markers, initialSelectedNestId) {
@@ -255,6 +266,29 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                     )
                 }
             }
+        }
+
+        if (viewModel.showUnlockConfirm) {
+            AlertDialog(
+                onDismissRequest = { viewModel.dismissUnlockConfirm() },
+                title = { Text("새로운 둥지 발견!", fontWeight = FontWeight.Bold) },
+                text = { Text("둥지 근처에 도착했습니다.\n이곳을 해금하고 탐험을 시작할까요?") },
+                confirmButton = {
+                    Button(
+                        onClick = { viewModel.confirmUnlock() },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF386641))
+                    ) {
+                        Text("예", color = Color.White)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { viewModel.dismissUnlockConfirm() }) {
+                        Text("아니오", color = Color.Gray)
+                    }
+                },
+                containerColor = Color.White,
+                shape = RoundedCornerShape(16.dp)
+            )
         }
     }
 }

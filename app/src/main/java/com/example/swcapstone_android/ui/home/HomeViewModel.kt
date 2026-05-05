@@ -13,7 +13,6 @@ import androidx.lifecycle.viewModelScope
 import com.example.swcapstone_android.BuildConfig
 import com.example.swcapstone_android.data.TokenManager
 import com.example.swcapstone_android.data.model.PinData
-import com.example.swcapstone_android.data.model.TokenData
 import com.example.swcapstone_android.data.remote.RetrofitClient
 import com.example.swcapstone_android.util.GeofenceManager
 import com.google.android.gms.location.LocationCallback
@@ -33,6 +32,11 @@ import kotlinx.coroutines.launch
 
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
+
+    var showUnlockConfirm by mutableStateOf(false)
+    private var pendingUnlockId: Long? = null
+    private var pendingLat: Double = 0.0
+    private var pendingLng: Double = 0.0
 
     var distanceToSelectedPin by mutableStateOf<Int?>(null)
         private set
@@ -66,6 +70,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     var selectedPinId by mutableStateOf<Long?>(null)
         private set
+
+    private val _navigateToUnlock = MutableStateFlow<Long?>(null)
+    val navigateToUnlock = _navigateToUnlock.asStateFlow()
+
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
             val userLocation = result.lastLocation ?: return
@@ -81,11 +89,58 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
                     // 10m 단위로 끊어서 업데이트 (예: 28m -> 20m)
                     distanceToSelectedPin = (distance.toInt() / 10) * 10
+
+                    if (distance <= 10f) {
+                        pendingUnlockId = id
+                        pendingLat = userLocation.latitude
+                        pendingLng = userLocation.longitude
+                        showUnlockConfirm = true // 팝업
+                        stopTracking() // 해금 시도 시 트래킹 중단 (반복 호출 방지)
+                    }
                 }
             } ?: run {
                 distanceToSelectedPin = null // 선택된 핀 없으면 거리 안 띄움
             }
         }
+    }
+
+    private fun checkAndUnlockNest(id: Long, lat: Double, lng: Double) {
+        viewModelScope.launch {
+            try {
+                val token = tokenManager.accessToken.first() ?: return@launch
+                val authHeader = "Bearer $token"
+
+                // 1. 상세 정보 조회
+                val response = RetrofitClient.instance.getNestDetail(authHeader, id)
+
+                // 핵심: .body()를 호출해야 NestDetailResponse 객체에 접근할 수 있어!
+                val body = response.body()
+
+                if (response.isSuccessful && body?.status == "SUCCESS") {
+                    val nestData = body.data // 이제 data 필드에 접근 가능
+
+                    if (!nestData.unlocked) {
+                        // 2. 잠겨있다면 해금 요청
+                        val locationBody = mapOf("latitude" to lat, "longitude" to lng)
+                        val unlockResponse = RetrofitClient.instance.unlockNest(authHeader, id, locationBody)
+
+                        val unlockBody = unlockResponse.body()
+
+                        if (unlockResponse.isSuccessful && unlockBody?.status == "SUCCESS") {
+                            Log.d("Home", "해금 성공: $id")
+                        }
+                    }
+                    _navigateToUnlock.value = id
+                    stopTracking()
+                }
+            } catch (e: Exception) {
+                Log.e("Home", "해금 프로세스 오류: ${e.message}")
+            }
+        }
+    }
+
+    fun onUnlockNavigated() {
+        _navigateToUnlock.value = null
     }
 
     fun updatePermissionStatus(granted: Boolean) {
@@ -199,5 +254,17 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     fun stopTracking() {
         fusedLocationClient.removeLocationUpdates(locationCallback)
+    }
+
+    fun confirmUnlock() {
+        val id = pendingUnlockId ?: return
+        checkAndUnlockNest(id, pendingLat, pendingLng)
+        showUnlockConfirm = false
+    }
+
+    // 사용자가 팝업에서 [아니오]를 눌렀을 때 실행
+    fun dismissUnlockConfirm() {
+        showUnlockConfirm = false
+        startTracking()
     }
 }
