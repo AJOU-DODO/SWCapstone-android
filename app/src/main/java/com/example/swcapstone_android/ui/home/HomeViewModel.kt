@@ -51,7 +51,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val fusedLocationClient = LocationServices.getFusedLocationProviderClient(application)
     // 현재 지도 카메라 상태
     var cameraPositionState by mutableStateOf<CameraPositionState>(CameraPositionState(
-        position = CameraPosition.fromLatLngZoom(LatLng(37.5665, 126.9780), 15f)
+        position = CameraPosition.fromLatLngZoom(LatLng(37.5665, 126.9780), 16.5f)
     ))
 
     // 위치 권한 허용 여부
@@ -193,7 +193,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
                 // 카메라를 내 위치로 이동
                 cameraPositionState.position = CameraPosition.fromLatLngZoom(
-                    LatLng(it.latitude, it.longitude), 17.5f
+                    LatLng(it.latitude, it.longitude), 16.5f
                 )
 
                 // 해당 좌표로 서버에 핀 요청
