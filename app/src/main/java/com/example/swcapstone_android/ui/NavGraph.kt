@@ -21,6 +21,7 @@ import com.example.swcapstone_android.ui.userdetail.UserDetailViewModel
 import com.example.swcapstone_android.ui.write.WriteScreen
 import com.example.swcapstone_android.ui.write.WriteViewModel
 import com.example.swcapstone_android.ui.unlock.UnlockScreen
+import com.example.swcapstone_android.ui.unlock.UnlockViewModel
 
 @Composable
 fun NavGraph(
@@ -124,9 +125,11 @@ fun NavGraph(
 
         composable("unlock/{nestId}") { backStackEntry ->
             val nestId = backStackEntry.arguments?.getString("nestId")?.toLong() ?: 0L
+            val unlockViewModel: UnlockViewModel = viewModel()
 
              UnlockScreen(
                  nestId = nestId,
+                 viewModel = unlockViewModel,
                  onFinished = { navController.popBackStack() }
              )
         }

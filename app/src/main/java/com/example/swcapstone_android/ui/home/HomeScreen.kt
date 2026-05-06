@@ -185,8 +185,6 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                     fontSize = 14.sp
                 )
             }
-            if (distance <= 10)
-                viewModel.stopTracking()
             Log.d("Home", "지오펜스 해제 완료")
         }
 

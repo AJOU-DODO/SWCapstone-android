@@ -91,6 +91,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                     distanceToSelectedPin = (distance.toInt() / 10) * 10
 
                     if (distance <= 10f) {
+                        showBottomSheet = false
                         pendingUnlockId = id
                         pendingLat = userLocation.latitude
                         pendingLng = userLocation.longitude
@@ -112,8 +113,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
                 // 1. 상세 정보 조회
                 val response = RetrofitClient.instance.getNestDetail(authHeader, id)
-
-                // 핵심: .body()를 호출해야 NestDetailResponse 객체에 접근할 수 있어!
                 val body = response.body()
 
                 if (response.isSuccessful && body?.status == "SUCCESS") {
@@ -128,9 +127,15 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
                         if (unlockResponse.isSuccessful && unlockBody?.status == "SUCCESS") {
                             Log.d("Home", "해금 성공: $id")
+
+                            _navigateToUnlock.value = id
                         }
                     }
-                    _navigateToUnlock.value = id
+                    else {
+                        // 이미 해금된 상태라면 바로 이동
+                        Log.d("Home", "이미 해금된 둥지입니다.")
+                        _navigateToUnlock.value = id
+                    }
                     stopTracking()
                 }
             } catch (e: Exception) {
