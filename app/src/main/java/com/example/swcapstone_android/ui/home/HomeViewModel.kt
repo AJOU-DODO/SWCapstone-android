@@ -33,6 +33,8 @@ import kotlinx.coroutines.launch
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
+    var isTrackingMode by mutableStateOf(false)
+
     var showUnlockConfirm by mutableStateOf(false)
     private var pendingUnlockId: Long? = null
     private var pendingLat: Double = 0.0
@@ -78,6 +80,18 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         override fun onLocationResult(result: LocationResult) {
             val userLocation = result.lastLocation ?: return
 
+            if (isTrackingMode) {
+                viewModelScope.launch {
+                    cameraPositionState.animate(
+                        update = CameraUpdateFactory.newLatLngZoom(
+                            LatLng(userLocation.latitude, userLocation.longitude),
+                            19f // 산책 느낌을 위해 조금 더 확대 (20f는 너무 가까울 수 있으니 19f 추천)
+                        ),
+                        durationMs = 1000 // 부드러운 이동을 위해 애니메이션 시간 추가
+                    )
+                }
+            }
+
             // 선택된 핀이 있을 때만 거리 계산
             selectedPinId?.let { id ->
                 markers.find { it.id == id }?.let { pin ->
@@ -96,6 +110,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                         pendingLat = userLocation.latitude
                         pendingLng = userLocation.longitude
                         showUnlockConfirm = true // 팝업
+                        isTrackingMode = false
                         stopTracking() // 해금 시도 시 트래킹 중단 (반복 호출 방지)
                     }
                 }
@@ -183,6 +198,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     fun fetchPinsAtUserLocation() {
         if (!isLocationPermissionGranted) return
 
+        isTrackingMode = true
+
         // 현재 기기의 정밀한 위치를 1회성으로 요청
         fusedLocationClient.getCurrentLocation(
             Priority.PRIORITY_HIGH_ACCURACY,
@@ -241,6 +258,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     fun selectPin(id: Long) {
         selectedPinId = id
         showBottomSheet = false // 바텀시트 닫기
+        isTrackingMode = true
 
         // 해당 핀 위치로 카메라 이동 (선택 사항)
         markers.find { it.id == id }?.let { pin ->

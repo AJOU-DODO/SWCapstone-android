@@ -114,6 +114,13 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
         viewModel.updatePermissionStatus(locationPermissionState.status.isGranted)
     }
 
+    LaunchedEffect(viewModel.cameraPositionState.isMoving) {
+        // 사용자가 손가락으로 드래그하거나 줌을 조절해서 움직이는 경우
+        if (viewModel.cameraPositionState.cameraMoveStartedReason == CameraMoveStartedReason.GESTURE) {
+            viewModel.isTrackingMode = false // 자동 추적 중단
+        }
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         // 구글 지도 컴포넌트
         GoogleMap(
@@ -125,6 +132,9 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                 maxZoomPreference = 19f
             ),
             onMapClick = { viewModel.showBottomSheet = false },
+            onMapLoaded = {
+                // 초기 로드 설정
+            },
             uiSettings = MapUiSettings(
                 zoomControlsEnabled = false,
                 myLocationButtonEnabled = false
