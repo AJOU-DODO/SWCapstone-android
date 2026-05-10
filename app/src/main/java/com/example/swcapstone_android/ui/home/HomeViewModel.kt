@@ -152,6 +152,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                         _navigateToUnlock.value = id
                     }
                     stopTracking()
+                    distanceToSelectedPin = null
+                    selectedPinId = null
                 }
             } catch (e: Exception) {
                 Log.e("Home", "해금 프로세스 오류: ${e.message}")
@@ -281,7 +283,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     fun confirmUnlock() {
         val id = pendingUnlockId ?: return
+
+        selectedPinId = null
+        distanceToSelectedPin = null
+        isTrackingMode = false
+
         checkAndUnlockNest(id, pendingLat, pendingLng)
+
         showUnlockConfirm = false
     }
 
