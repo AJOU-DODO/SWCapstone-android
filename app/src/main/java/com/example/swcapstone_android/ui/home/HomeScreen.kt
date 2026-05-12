@@ -56,6 +56,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                onNavigateToWrite: (Double, Double) -> Unit,
                onNavigateToUnlock: (Long) -> Unit,
                onNavigateToMypage: () -> Unit,
+               onNavigateToCategory: () -> Unit,
                initialSelectedNestId: String? = null) {
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed) // 기존 Drawer 유지용
@@ -193,7 +194,6 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                     fontSize = 14.sp
                 )
             }
-            Log.d("Home", "지오펜스 해제 완료")
         }
 
         // 상단 바
@@ -215,7 +215,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                             onNavigateToWrite(actualLatLng.latitude, actualLatLng.longitude)
                         }
                 }
-                    "카테고리" -> { /* URL 변경 로직 */ }
+                    "카테고리" -> { onNavigateToCategory() }
                     "마이페이지" -> { onNavigateToMypage() }
                     "설정" -> onNavigateToSetting()
                 }

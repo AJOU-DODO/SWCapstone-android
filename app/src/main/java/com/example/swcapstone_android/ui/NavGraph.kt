@@ -7,6 +7,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.swcapstone_android.ui.category.CategoryScreen
+import com.example.swcapstone_android.ui.category.CategoryViewModel
 import com.example.swcapstone_android.ui.home.HomeScreen
 import com.example.swcapstone_android.ui.login.LoginScreen
 import com.example.swcapstone_android.ui.login.LoginViewModel
@@ -96,7 +98,8 @@ fun NavGraph(
                 onNavigateToUnlock = { id ->
                     navController.navigate("unlock/$id")
                 },
-                onNavigateToMypage = { navController.navigate("mypage") }
+                onNavigateToMypage = { navController.navigate("mypage") },
+                onNavigateToCategory = { navController.navigate("category") }
             )
         }
 
@@ -139,6 +142,14 @@ fun NavGraph(
             MypageScreen(
                 onBackClick = { navController.popBackStack() },
                 viewModel = mypageViewModel
+            )
+        }
+
+        composable("category") {
+            val categoryViewModel: CategoryViewModel = viewModel()
+            CategoryScreen(
+                onBackClick = { navController.popBackStack() },
+                viewModel = categoryViewModel
             )
         }
     }

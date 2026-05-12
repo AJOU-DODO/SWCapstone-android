@@ -88,8 +88,8 @@ fun SettingScreen(
 
             val radiusOptions = listOf(
                 RadiusOption("좁게 (250m)", 250),
-                RadiusOption("보통 (2000m)", 2000),
-                RadiusOption("넓게 (1000m)", 1000) // 요청하신 수치대로 1000 설정
+                RadiusOption("보통 (1000m)", 1000),
+                RadiusOption("넓게 (2000m)", 2000) // 요청하신 수치대로 1000 설정
             )
 
             Column(Modifier.selectableGroup()) {

@@ -94,7 +94,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                             durationMs = 1000
                         )
                     } catch (e: Exception) {
-                        Log.d("HomeVM", "카메라 애니메이션 중첩 혹은 취소됨: ${e.message}")
+                        Log.d("Home", "카메라 애니메이션 중첩 혹은 취소됨: ${e.message}")
                     }
                 }
             }
@@ -277,7 +277,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                         CameraUpdateFactory.newLatLngZoom(pin.position, 17.5f)
                     )
                 } catch (e: Exception) {
-                    Log.d("HomeVM", "핀 선택 애니메이션 취소됨")
+                    Log.d("Home", "핀 선택 애니메이션 취소됨")
                 }
             }
         }
