@@ -1,10 +1,7 @@
 package com.example.swcapstone_android.ui
 
-import android.util.Log
 import com.example.swcapstone_android.ui.splash.SplashScreen
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController

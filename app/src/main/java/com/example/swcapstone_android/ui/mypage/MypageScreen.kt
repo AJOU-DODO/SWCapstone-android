@@ -1,7 +1,5 @@
 package com.example.swcapstone_android.ui.mypage
 
-import android.util.Log
-import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.layout.Box
@@ -21,7 +19,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.swcapstone_android.data.bridge.MypageBridge
-import com.example.swcapstone_android.data.bridge.UnlockBridge
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
