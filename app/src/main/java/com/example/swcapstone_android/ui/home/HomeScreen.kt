@@ -58,6 +58,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                onNavigateToSetting: () -> Unit,
                onNavigateToWrite: (Double, Double) -> Unit,
                onNavigateToUnlock: (Long) -> Unit,
+               onNavigateToMypage: () -> Unit,
                initialSelectedNestId: String? = null) {
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed) // 기존 Drawer 유지용
@@ -218,7 +219,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                         }
                 }
                     "카테고리" -> { /* URL 변경 로직 */ }
-                    "마이페이지" -> { /* URL 변경 로직 */ }
+                    "마이페이지" -> { onNavigateToMypage() }
                     "설정" -> onNavigateToSetting()
                 }
             },
