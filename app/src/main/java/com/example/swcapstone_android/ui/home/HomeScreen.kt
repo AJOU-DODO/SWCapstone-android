@@ -152,14 +152,14 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                     } else {
                         // 직접 줌인 수행
                         scope.launch {
-                            val targetZoom = (currentZoom + 1.25f).coerceAtMost(19f)
-
-                            viewModel.cameraPositionState.animate(
-                                CameraUpdateFactory.newLatLngZoom(
-                                    cluster.position, // 클릭된 클러스터의 중심 좌표
-                                    targetZoom // 현재보다 1.5단계 더 확대
+                            try {
+                                val targetZoom = (currentZoom + 1.25f).coerceAtMost(19f)
+                                viewModel.cameraPositionState.animate(
+                                    CameraUpdateFactory.newLatLngZoom(cluster.position, targetZoom)
                                 )
-                            )
+                            } catch (e: Exception) {
+                                Log.d("Home", "클러스터 줌 애니메이션 취소됨")
+                            }
                         }
                     }
                     true // 직접 처리했으므로 true 반환

@@ -82,16 +82,20 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
             if (isTrackingMode) {
                 viewModelScope.launch {
-                    cameraPositionState.animate(
-                        update = CameraUpdateFactory.newCameraPosition(
-                            CameraPosition.Builder()
-                                .target(LatLng(userLocation.latitude, userLocation.longitude))
-                                .zoom(19f)
-                                .bearing(userLocation.bearing) //
-                                .build()
-                        ),
-                        durationMs = 1000
-                    )
+                    try {
+                        cameraPositionState.animate(
+                            update = CameraUpdateFactory.newCameraPosition(
+                                CameraPosition.Builder()
+                                    .target(LatLng(userLocation.latitude, userLocation.longitude))
+                                    .zoom(19f)
+                                    .bearing(userLocation.bearing) //
+                                    .build()
+                            ),
+                            durationMs = 1000
+                        )
+                    } catch (e: Exception) {
+                        Log.d("HomeVM", "카메라 애니메이션 중첩 혹은 취소됨: ${e.message}")
+                    }
                 }
             }
 
@@ -268,9 +272,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         // 해당 핀 위치로 카메라 이동 (선택 사항)
         markers.find { it.id == id }?.let { pin ->
             viewModelScope.launch {
-                cameraPositionState.animate(
-                    CameraUpdateFactory.newLatLngZoom(pin.position, 17.5f)
-                )
+                try {
+                    cameraPositionState.animate(
+                        CameraUpdateFactory.newLatLngZoom(pin.position, 17.5f)
+                    )
+                } catch (e: Exception) {
+                    Log.d("HomeVM", "핀 선택 애니메이션 취소됨")
+                }
             }
         }
     }
