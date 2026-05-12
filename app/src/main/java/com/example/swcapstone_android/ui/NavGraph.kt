@@ -22,6 +22,8 @@ import com.example.swcapstone_android.ui.write.WriteScreen
 import com.example.swcapstone_android.ui.write.WriteViewModel
 import com.example.swcapstone_android.ui.unlock.UnlockScreen
 import com.example.swcapstone_android.ui.unlock.UnlockViewModel
+import com.example.swcapstone_android.ui.mypage.MypageScreen
+import com.example.swcapstone_android.ui.mypage.MypageViewModel
 
 @Composable
 fun NavGraph(
@@ -96,7 +98,8 @@ fun NavGraph(
                 },
                 onNavigateToUnlock = { id ->
                     navController.navigate("unlock/$id")
-                }
+                },
+                onNavigateToMypage = { navController.navigate("mypage") }
             )
         }
 
@@ -132,6 +135,14 @@ fun NavGraph(
                  viewModel = unlockViewModel,
                  onFinished = { navController.popBackStack() }
              )
+        }
+
+        composable("mypage") {
+            val mypageViewModel: MypageViewModel = viewModel()
+            MypageScreen(
+                onBackClick = { navController.popBackStack() },
+                viewModel = mypageViewModel
+            )
         }
     }
 }

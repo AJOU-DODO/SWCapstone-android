@@ -17,7 +17,7 @@ class GeofenceManager(private val context: Context) {
     fun addGeofence(id: String, lat: Double, lng: Double) {
         val geofence = Geofence.Builder()
             .setRequestId(id) // 둥지 ID
-            .setCircularRegion(lat, lng, 1f) // 10m 반경
+            .setCircularRegion(lat, lng, 10f) // 10m 반경
             .setExpirationDuration(Geofence.NEVER_EXPIRE) // 수동 해제 전까지 유지
             .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER) // 진입 시에만 알림
             .build()
