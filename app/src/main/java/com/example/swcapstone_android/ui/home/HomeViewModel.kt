@@ -88,7 +88,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                                 CameraPosition.Builder()
                                     .target(LatLng(userLocation.latitude, userLocation.longitude))
                                     .zoom(19f)
-                                    .bearing(userLocation.bearing) //
+                                    .bearing(userLocation.bearing)
                                     .build()
                             ),
                             durationMs = 1000

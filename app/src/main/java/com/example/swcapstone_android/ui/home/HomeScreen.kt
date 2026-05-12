@@ -43,6 +43,7 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.CameraPosition
 import com.google.maps.android.compose.*
 import com.google.maps.android.compose.clustering.*
 import kotlinx.coroutines.launch
@@ -98,6 +99,8 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
 
     val unlockNestId by viewModel.navigateToUnlock.collectAsState()
 
+    val mapPaddingTop = if (viewModel.isTrackingMode) 400.dp else 0.dp
+
     LaunchedEffect(unlockNestId) {
         unlockNestId?.let { id ->
             onNavigateToUnlock(id)
@@ -114,7 +117,6 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
     }
 
     LaunchedEffect(viewModel.cameraPositionState.isMoving) {
-        // 사용자가 손가락으로 드래그하거나 줌을 조절해서 움직이는 경우
         if (viewModel.cameraPositionState.cameraMoveStartedReason == CameraMoveStartedReason.GESTURE) {
             viewModel.isTrackingMode = false // 자동 추적 중단
         }
@@ -125,6 +127,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = viewModel.cameraPositionState,
+            contentPadding = PaddingValues(top = mapPaddingTop),
             properties = MapProperties(
                 isMyLocationEnabled = viewModel.isLocationPermissionGranted,
                 minZoomPreference = 14f,
