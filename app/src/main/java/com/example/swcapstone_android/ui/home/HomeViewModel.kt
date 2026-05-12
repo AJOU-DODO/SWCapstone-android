@@ -83,11 +83,14 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             if (isTrackingMode) {
                 viewModelScope.launch {
                     cameraPositionState.animate(
-                        update = CameraUpdateFactory.newLatLngZoom(
-                            LatLng(userLocation.latitude, userLocation.longitude),
-                            19f // 산책 느낌을 위해 조금 더 확대 (20f는 너무 가까울 수 있으니 19f 추천)
+                        update = CameraUpdateFactory.newCameraPosition(
+                            CameraPosition.Builder()
+                                .target(LatLng(userLocation.latitude, userLocation.longitude))
+                                .zoom(19f)
+                                .bearing(userLocation.bearing) //
+                                .build()
                         ),
-                        durationMs = 1000 // 부드러운 이동을 위해 애니메이션 시간 추가
+                        durationMs = 1000
                     )
                 }
             }
