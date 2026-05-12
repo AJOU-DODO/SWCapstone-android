@@ -2,12 +2,14 @@ package com.example.swcapstone_android.util
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.example.swcapstone_android.R
+import com.example.swcapstone_android.ui.MainActivity
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingEvent
 
@@ -19,11 +21,13 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
 
         // 진입(ENTER) 이벤트인지 확인
         if (event.geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER) {
-            showNotification(context)
+            val triggeringGeofences = event.triggeringGeofences
+            val nestId = triggeringGeofences?.firstOrNull()?.requestId ?: ""
+            showNotification(context, nestId)
         }
     }
 
-    private fun showNotification(context: Context) {
+    private fun showNotification(context: Context, nestId: String) {
         val channelId = "DODO_ARRIVAL"
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -33,11 +37,24 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
             notificationManager.createNotificationChannel(channel)
         }
 
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("SELECTED_NEST_ID", nestId) // 둥지 ID 전달
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            nestId.hashCode(), // 고유 ID
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.mipmap.ic_launcher_foreground)
             .setContentTitle("둥지 도착!")
             .setContentText("목적지 10m 이내에 도착했습니다. 탐험을 시작하세요!")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .build()
 

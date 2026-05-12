@@ -1,5 +1,6 @@
 package com.example.swcapstone_android.ui
 
+import android.util.Log
 import com.example.swcapstone_android.ui.splash.SplashScreen
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -19,19 +20,33 @@ import com.example.swcapstone_android.ui.userdetail.UserDetailScreen
 import com.example.swcapstone_android.ui.userdetail.UserDetailViewModel
 import com.example.swcapstone_android.ui.write.WriteScreen
 import com.example.swcapstone_android.ui.write.WriteViewModel
-import kotlinx.coroutines.launch
+import com.example.swcapstone_android.ui.unlock.UnlockScreen
+import com.example.swcapstone_android.ui.unlock.UnlockViewModel
 
 @Composable
-fun NavGraph(modifier: Modifier = Modifier, navController: NavHostController){
-    NavHost(navController = navController, startDestination = Screen.SplashScreen.route){
+fun NavGraph(
+    modifier: Modifier = Modifier,
+    navController: NavHostController,
+    startSelectedNestId: String? = null
+){
+    NavHost(
+        navController = navController,
+        startDestination = Screen.SplashScreen.route,
+        modifier = modifier
+    ) {
         composable(route = Screen.SplashScreen.route) {
             val splashViewModel: SplashViewModel = viewModel()
 
             SplashScreen(
                 viewModel = splashViewModel,
                 onSplashFinished = { destination ->
+                    var finalRoute = destination
 
-                    navController.navigate(destination) {
+                    if (destination == Screen.HomeScreen.route && startSelectedNestId != null) {
+                        finalRoute = Screen.HomeScreen.route + "?nestId=$startSelectedNestId"
+                    }
+
+                    navController.navigate(finalRoute) {
                         popUpTo(Screen.SplashScreen.route) { inclusive = true }
                     }
                 }
@@ -66,13 +81,21 @@ fun NavGraph(modifier: Modifier = Modifier, navController: NavHostController){
             )
         }
 
-        composable(Screen.HomeScreen.route) {
+        composable(
+            Screen.HomeScreen.route + "?nestId={nestId}"
+        ) { backStackEntry ->
+            val nestId = backStackEntry.arguments?.getString("nestId")
+            val finalNestId = nestId ?: startSelectedNestId
             HomeScreen(
+                initialSelectedNestId = finalNestId,
                 onNavigateToSetting = {
                     navController.navigate("setting") // Screen 클래스에 정의했다면 Screen.SettingScreen.route
                 },
                 onNavigateToWrite = { lat, lng ->
                     navController.navigate("write/$lat/$lng")
+                },
+                onNavigateToUnlock = { id ->
+                    navController.navigate("unlock/$id")
                 }
             )
         }
@@ -98,6 +121,17 @@ fun NavGraph(modifier: Modifier = Modifier, navController: NavHostController){
                 lng = lng,
                 viewModel = writeViewModel
             )
+        }
+
+        composable("unlock/{nestId}") { backStackEntry ->
+            val nestId = backStackEntry.arguments?.getString("nestId")?.toLong() ?: 0L
+            val unlockViewModel: UnlockViewModel = viewModel()
+
+             UnlockScreen(
+                 nestId = nestId,
+                 viewModel = unlockViewModel,
+                 onFinished = { navController.popBackStack() }
+             )
         }
     }
 }

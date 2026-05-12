@@ -13,7 +13,6 @@ import androidx.lifecycle.viewModelScope
 import com.example.swcapstone_android.BuildConfig
 import com.example.swcapstone_android.data.TokenManager
 import com.example.swcapstone_android.data.model.PinData
-import com.example.swcapstone_android.data.model.TokenData
 import com.example.swcapstone_android.data.remote.RetrofitClient
 import com.example.swcapstone_android.util.GeofenceManager
 import com.google.android.gms.location.LocationCallback
@@ -34,6 +33,13 @@ import kotlinx.coroutines.launch
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
+    var isTrackingMode by mutableStateOf(false)
+
+    var showUnlockConfirm by mutableStateOf(false)
+    private var pendingUnlockId: Long? = null
+    private var pendingLat: Double = 0.0
+    private var pendingLng: Double = 0.0
+
     var distanceToSelectedPin by mutableStateOf<Int?>(null)
         private set
 
@@ -47,7 +53,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val fusedLocationClient = LocationServices.getFusedLocationProviderClient(application)
     // 현재 지도 카메라 상태
     var cameraPositionState by mutableStateOf<CameraPositionState>(CameraPositionState(
-        position = CameraPosition.fromLatLngZoom(LatLng(37.5665, 126.9780), 15f)
+        position = CameraPosition.fromLatLngZoom(LatLng(37.5665, 126.9780), 16.5f)
     ))
 
     // 위치 권한 허용 여부
@@ -66,9 +72,28 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     var selectedPinId by mutableStateOf<Long?>(null)
         private set
+
+    private val _navigateToUnlock = MutableStateFlow<Long?>(null)
+    val navigateToUnlock = _navigateToUnlock.asStateFlow()
+
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
             val userLocation = result.lastLocation ?: return
+
+            if (isTrackingMode) {
+                viewModelScope.launch {
+                    cameraPositionState.animate(
+                        update = CameraUpdateFactory.newCameraPosition(
+                            CameraPosition.Builder()
+                                .target(LatLng(userLocation.latitude, userLocation.longitude))
+                                .zoom(19f)
+                                .bearing(userLocation.bearing) //
+                                .build()
+                        ),
+                        durationMs = 1000
+                    )
+                }
+            }
 
             // 선택된 핀이 있을 때만 거리 계산
             selectedPinId?.let { id ->
@@ -81,11 +106,66 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
                     // 10m 단위로 끊어서 업데이트 (예: 28m -> 20m)
                     distanceToSelectedPin = (distance.toInt() / 10) * 10
+
+                    if (distance <= 10f) {
+                        showBottomSheet = false
+                        pendingUnlockId = id
+                        pendingLat = userLocation.latitude
+                        pendingLng = userLocation.longitude
+                        showUnlockConfirm = true // 팝업
+                        isTrackingMode = false
+                        stopTracking() // 해금 시도 시 트래킹 중단 (반복 호출 방지)
+                    }
                 }
             } ?: run {
                 distanceToSelectedPin = null // 선택된 핀 없으면 거리 안 띄움
             }
         }
+    }
+
+    private fun checkAndUnlockNest(id: Long, lat: Double, lng: Double) {
+        viewModelScope.launch {
+            try {
+                val token = tokenManager.accessToken.first() ?: return@launch
+                val authHeader = "Bearer $token"
+
+                // 1. 상세 정보 조회
+                val response = RetrofitClient.instance.getNestDetail(authHeader, id)
+                val body = response.body()
+
+                if (response.isSuccessful && body?.status == "SUCCESS") {
+                    val nestData = body.data // 이제 data 필드에 접근 가능
+
+                    if (!nestData.unlocked) {
+                        // 2. 잠겨있다면 해금 요청
+                        val locationBody = mapOf("latitude" to lat, "longitude" to lng)
+                        val unlockResponse = RetrofitClient.instance.unlockNest(authHeader, id, locationBody)
+
+                        val unlockBody = unlockResponse.body()
+
+                        if (unlockResponse.isSuccessful && unlockBody?.status == "SUCCESS") {
+                            Log.d("Home", "해금 성공: $id")
+
+                            _navigateToUnlock.value = id
+                        }
+                    }
+                    else {
+                        // 이미 해금된 상태라면 바로 이동
+                        Log.d("Home", "이미 해금된 둥지입니다.")
+                        _navigateToUnlock.value = id
+                    }
+                    stopTracking()
+                    distanceToSelectedPin = null
+                    selectedPinId = null
+                }
+            } catch (e: Exception) {
+                Log.e("Home", "해금 프로세스 오류: ${e.message}")
+            }
+        }
+    }
+
+    fun onUnlockNavigated() {
+        _navigateToUnlock.value = null
     }
 
     fun updatePermissionStatus(granted: Boolean) {
@@ -123,6 +203,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     fun fetchPinsAtUserLocation() {
         if (!isLocationPermissionGranted) return
 
+        isTrackingMode = true
+
         // 현재 기기의 정밀한 위치를 1회성으로 요청
         fusedLocationClient.getCurrentLocation(
             Priority.PRIORITY_HIGH_ACCURACY,
@@ -133,7 +215,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
                 // 카메라를 내 위치로 이동
                 cameraPositionState.position = CameraPosition.fromLatLngZoom(
-                    LatLng(it.latitude, it.longitude), 17.5f
+                    LatLng(it.latitude, it.longitude), 16.5f
                 )
 
                 // 해당 좌표로 서버에 핀 요청
@@ -181,6 +263,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     fun selectPin(id: Long) {
         selectedPinId = id
         showBottomSheet = false // 바텀시트 닫기
+        isTrackingMode = true
 
         // 해당 핀 위치로 카메라 이동 (선택 사항)
         markers.find { it.id == id }?.let { pin ->
@@ -199,5 +282,23 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     fun stopTracking() {
         fusedLocationClient.removeLocationUpdates(locationCallback)
+    }
+
+    fun confirmUnlock() {
+        val id = pendingUnlockId ?: return
+
+        selectedPinId = null
+        distanceToSelectedPin = null
+        isTrackingMode = false
+
+        checkAndUnlockNest(id, pendingLat, pendingLng)
+
+        showUnlockConfirm = false
+    }
+
+    // 사용자가 팝업에서 [아니오]를 눌렀을 때 실행
+    fun dismissUnlockConfirm() {
+        showUnlockConfirm = false
+        startTracking()
     }
 }

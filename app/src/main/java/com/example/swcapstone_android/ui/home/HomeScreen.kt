@@ -15,6 +15,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -55,7 +56,9 @@ import kotlinx.coroutines.launch
 @Composable
 fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                onNavigateToSetting: () -> Unit,
-               onNavigateToWrite: (Double, Double) -> Unit) {
+               onNavigateToWrite: (Double, Double) -> Unit,
+               onNavigateToUnlock: (Long) -> Unit,
+               initialSelectedNestId: String? = null) {
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed) // 기존 Drawer 유지용
     var isMenuExpanded by remember { mutableStateOf(false) }
@@ -66,11 +69,19 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
         WebBridge(onNestSelected = { id ->
             viewModel.selectPin(id)
 
-            viewModel.markers.find { it.id == id }?.let { pin ->
-                viewModel.registerGeofence(pin.id.toString(), pin.position.latitude, pin.position.longitude)
-
+            viewModel.markers.find { it.id == id }?.let { selectedPin ->
+                // 둥지 ID와 좌표를 넘겨 지오펜스 등록
+                viewModel.registerGeofence(
+                    id = selectedPin.id.toString(),
+                    lat = selectedPin.position.latitude,
+                    lng = selectedPin.position.longitude
+                )
                 viewModel.startTracking()
+                Log.d("Home", "지오펜스 등록 호출: ${selectedPin.id}")
             }
+            // hotfix에서 추가된 리스너 로직 유지
+            Log.d("Home", "선택된 ID 처리: $id")
+            // 필요하다면 여기서 viewModel의 함수를 호출하면 돼
         })
     }
 
@@ -86,12 +97,28 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
         android.Manifest.permission.ACCESS_FINE_LOCATION
     )
 
+    val unlockNestId by viewModel.navigateToUnlock.collectAsState()
+
+    LaunchedEffect(unlockNestId) {
+        unlockNestId?.let { id ->
+            onNavigateToUnlock(id)
+            viewModel.onUnlockNavigated() // 중복 이동 방지 위해 리셋
+        }
+    }
+
     // 화면 진입 시 권한 요청
-    LaunchedEffect(locationPermissionState.status.isGranted) {
+    LaunchedEffect(locationPermissionState.status.isGranted, viewModel.markers, initialSelectedNestId) {
         if (!locationPermissionState.status.isGranted) {
             locationPermissionState.launchPermissionRequest()
         }
         viewModel.updatePermissionStatus(locationPermissionState.status.isGranted)
+    }
+
+    LaunchedEffect(viewModel.cameraPositionState.isMoving) {
+        // 사용자가 손가락으로 드래그하거나 줌을 조절해서 움직이는 경우
+        if (viewModel.cameraPositionState.cameraMoveStartedReason == CameraMoveStartedReason.GESTURE) {
+            viewModel.isTrackingMode = false // 자동 추적 중단
+        }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -105,6 +132,9 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                 maxZoomPreference = 19f
             ),
             onMapClick = { viewModel.showBottomSheet = false },
+            onMapLoaded = {
+                // 초기 로드 설정
+            },
             uiSettings = MapUiSettings(
                 zoomControlsEnabled = false,
                 myLocationButtonEnabled = false
@@ -165,6 +195,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                     fontSize = 14.sp
                 )
             }
+            Log.d("Home", "지오펜스 해제 완료")
         }
 
         // 상단 바
@@ -243,6 +274,29 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                     )
                 }
             }
+        }
+
+        if (viewModel.showUnlockConfirm) {
+            AlertDialog(
+                onDismissRequest = { viewModel.dismissUnlockConfirm() },
+                title = { Text("새로운 둥지 발견!", fontWeight = FontWeight.Bold) },
+                text = { Text("둥지 근처에 도착했습니다.\n이곳을 해금하고 탐험을 시작할까요?") },
+                confirmButton = {
+                    Button(
+                        onClick = { viewModel.confirmUnlock() },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF386641))
+                    ) {
+                        Text("예", color = Color.White)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { viewModel.dismissUnlockConfirm() }) {
+                        Text("아니오", color = Color.Gray)
+                    }
+                },
+                containerColor = Color.White,
+                shape = RoundedCornerShape(16.dp)
+            )
         }
     }
 }
