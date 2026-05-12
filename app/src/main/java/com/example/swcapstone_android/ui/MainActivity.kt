@@ -61,7 +61,7 @@ class MainActivity : ComponentActivity() {
         setIntent(intent)
         val nestId = intent.getStringExtra("SELECTED_NEST_ID")
         if (nestId != null) {
-            // TODO
+            nestIdState = nestId
         }
     }
 }

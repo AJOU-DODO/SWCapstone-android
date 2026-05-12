@@ -52,7 +52,7 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
         val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.mipmap.ic_launcher_foreground)
             .setContentTitle("둥지 도착!")
-            .setContentText("목적지 10m 이내에 도착했습니다. 탐험을 시작하세요!")
+            .setContentText("목적지 주변에 도착했습니다. 탐험을 시작하세요!")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
