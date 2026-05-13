@@ -35,7 +35,6 @@ class WebBridge(private val onNestSelected: (Long) -> Unit) {
     @JavascriptInterface
     fun sendNestIdSelected(id: Long) {
         Log.d("WebBridge", "웹에서 선택된 Nest ID: $id")
-        // 메인 스레드에서 동작해야 하거나 ViewModel에 알림
         onNestSelected(id)
     }
 }

@@ -5,6 +5,8 @@ import com.example.swcapstone_android.data.model.DeviceRequest
 import com.example.swcapstone_android.data.model.MyInfoResponse
 import com.example.swcapstone_android.data.model.NestDetailResponse
 import com.example.swcapstone_android.data.model.PinResponse
+import com.example.swcapstone_android.data.model.PostcardRequest
+import com.example.swcapstone_android.data.model.PostcardResponse
 import com.example.swcapstone_android.data.model.PresignedResponse
 import com.example.swcapstone_android.data.model.ProfileRequest
 import com.example.swcapstone_android.data.model.ReissueRequest
@@ -64,6 +66,11 @@ interface ApiService {
         @Path("id") id: Long,
         @Body location: Map<String, Double> // latitude, longitude
     ): Response<CommonResponse>
+    @POST("/api/v1/postcards")
+    suspend fun createPostcard(
+        @Header("Authorization") authHeader: String,
+        @Body request: PostcardRequest
+    ): Response<PostcardResponse>
 }
 
 // S3 업로드를 위한 별도 인터페이스

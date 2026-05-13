@@ -2,6 +2,7 @@ package com.example.swcapstone_android.ui
 
 import com.example.swcapstone_android.ui.splash.SplashScreen
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -149,10 +150,15 @@ fun NavGraph(
         }
 
         composable("postcard") {
+            val mypageBackStackEntry = remember(navController) {
+                navController.getBackStackEntry("mypage")
+            }
+            val mypageViewModel: MypageViewModel = viewModel(mypageBackStackEntry)
             val postcardViewModel: PostcardViewModel = viewModel()
             PostcardScreen(
                 onBackClick = { navController.popBackStack() },
-                viewModel = postcardViewModel
+                postcardViewModel = postcardViewModel,
+                mypageViewModel = mypageViewModel
             )
         }
 

@@ -32,6 +32,12 @@ class MypageViewModel(application: Application) : AndroidViewModel(application) 
         _jsCommand.value = null
     }
 
+    fun requestWebReload() {
+        val script = "window.requestReload()"
+        _jsCommand.value = script
+        Log.d("MypageVM", "새로고침 스크립트 전달")
+    }
+
     fun handleImageSelection(context: android.content.Context, uri: android.net.Uri) {
         viewModelScope.launch(Dispatchers.IO) { // 백그라운드 스레드에서 처리
             try {

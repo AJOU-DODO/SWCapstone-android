@@ -24,12 +24,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.swcapstone_android.R
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.swcapstone_android.ui.mypage.MypageViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PostcardScreen(
     onBackClick: () -> Unit,
-    viewModel: PostcardViewModel = viewModel()
+    postcardViewModel: PostcardViewModel = viewModel(),
+    mypageViewModel: MypageViewModel = viewModel()
 ) {
     // 1. PhotoPicker 런처 설정
     val pickMedia = rememberLauncherForActivityResult(
@@ -37,7 +39,7 @@ fun PostcardScreen(
     ) { uri ->
         // 사진 선택 후 결과 처리
         if (uri != null) {
-            viewModel.updateImage(uri)
+            postcardViewModel.updateImage(uri)
         }
     }
 
@@ -51,12 +53,21 @@ fun PostcardScreen(
                     }
                 },
                 actions = {
-                    TextButton(onClick = { viewModel.sendPostcard() }) {
+                    TextButton(onClick = {
+                        postcardViewModel.sendPostcard {
+                            mypageViewModel.requestWebReload()
+                            onBackClick()
+                        }
+                    }) {
                         Text("발행", color = Color(0xFF386641), fontWeight = FontWeight.Bold)
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color(0xFFF1F3E9)
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFFF1F3E9),
+                    scrolledContainerColor = Color.Unspecified,
+                    navigationIconContentColor = Color.Unspecified,
+                    titleContentColor = Color.Unspecified,
+                    actionIconContentColor = Color.Unspecified
                 )
             )
         },
@@ -94,9 +105,9 @@ fun PostcardScreen(
                             },
                         contentAlignment = Alignment.Center
                     ) {
-                        if (viewModel.selectedImageUri != null) {
+                        if (postcardViewModel.selectedImageUri != null) {
                             AsyncImage(
-                                model = viewModel.selectedImageUri,
+                                model = postcardViewModel.selectedImageUri,
                                 contentDescription = "Selected Image",
                                 modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(12.dp)),
                                 contentScale = ContentScale.Crop
@@ -119,8 +130,8 @@ fun PostcardScreen(
 
                     // 메시지 입력 영역
                     OutlinedTextField(
-                        value = viewModel.message,
-                        onValueChange = { if (it.length <= 200) viewModel.updateMessage(it) },
+                        value = postcardViewModel.message,
+                        onValueChange = { if (it.length <= 200) postcardViewModel.updateMessage(it) },
                         modifier = Modifier.fillMaxWidth().height(150.dp),
                         placeholder = { Text("메시지를 입력하세요...", color = Color.LightGray) },
                         shape = RoundedCornerShape(12.dp),
@@ -133,7 +144,7 @@ fun PostcardScreen(
                     )
 
                     Text(
-                        text = "${viewModel.message.length} / 200",
+                        text = "${postcardViewModel.message.length} / 200",
                         modifier = Modifier.align(Alignment.End).padding(top = 4.dp),
                         fontSize = 12.sp,
                         color = Color.Gray
