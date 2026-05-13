@@ -1,7 +1,10 @@
 package com.example.swcapstone_android.ui.mypage
 
+import android.net.Uri
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -15,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -24,11 +28,29 @@ import com.example.swcapstone_android.data.bridge.MypageBridge
 @Composable
 fun MypageScreen(
     onBackClick: () -> Unit,
+    onNavigateToPostcard: () -> Unit,
     viewModel: MypageViewModel = viewModel()
 ) {
+    val context = LocalContext.current
+
     val accessToken by viewModel.accessToken.collectAsState(initial = null)
     val url = remember { viewModel.getMypageUrl() }
-    val mypageBridge = remember(accessToken) { MypageBridge(accessToken) }
+
+    val jsCommand = viewModel.jsCommand
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { viewModel.handleImageSelection(context, it) }
+    }
+
+    val mypageBridge = remember(accessToken) {
+        MypageBridge(
+            accessToken = accessToken,
+            onImageRequest = { galleryLauncher.launch("image/*") },
+            onPostcardRequest = { onNavigateToPostcard() }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -39,8 +61,12 @@ fun MypageScreen(
                         Icon(Icons.Default.Close, contentDescription = "닫기")
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color(0xFFF1F3E9)
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFFF1F3E9),
+                    scrolledContainerColor = Color.Unspecified,
+                    navigationIconContentColor = Color.Unspecified,
+                    titleContentColor = Color.Unspecified,
+                    actionIconContentColor = Color.Unspecified
                 )
             )
         }
@@ -57,7 +83,14 @@ fun MypageScreen(
                             loadUrl(url)
                         }
                     },
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
+
+                    update = { webView ->
+                        jsCommand?.let { command ->
+                            webView.loadUrl("javascript:$command")
+                            viewModel.clearJsCommand()
+                        }
+                    }
                 )
             } else {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))

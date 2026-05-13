@@ -30,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -176,6 +177,25 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                     icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN),
                     title = selectedPin.title,
                     zIndex = 1f // 다른 마커들보다 위에 보이게 설정
+                )
+            }
+        }
+
+        if (viewModel.isArrowVisible) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center) // 화면 중앙 혹은 상단에 배치
+                    .padding(bottom = 200.dp) // 내 위치 아이콘보다 약간 위에 띄움
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_navigation_arrow), // 화살표 아이콘
+                    contentDescription = "Direction Arrow",
+                    tint = Color(0xFF386641),
+                    modifier = Modifier
+                        .size(48.dp)
+                        .graphicsLayer {
+                            rotationZ = viewModel.arrowRotation // 계산된 각도만큼 회전
+                        }
                 )
             }
         }

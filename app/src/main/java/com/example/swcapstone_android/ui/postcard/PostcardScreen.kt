@@ -1,17 +1,13 @@
 package com.example.swcapstone_android.ui.postcard
 
-import android.net.Uri
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,7 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -28,8 +23,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.swcapstone_android.R
+import androidx.compose.ui.tooling.preview.Preview
 
-/*@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PostcardScreen(
     onBackClick: () -> Unit,
@@ -56,7 +52,7 @@ fun PostcardScreen(
                 },
                 actions = {
                     TextButton(onClick = { viewModel.sendPostcard() }) {
-                        Text("DONE", color = Color(0xFF386641), fontWeight = FontWeight.Bold)
+                        Text("발행", color = Color(0xFF386641), fontWeight = FontWeight.Bold)
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -126,11 +122,13 @@ fun PostcardScreen(
                         value = viewModel.message,
                         onValueChange = { if (it.length <= 200) viewModel.updateMessage(it) },
                         modifier = Modifier.fillMaxWidth().height(150.dp),
-                        placeholder = { Text("따뜻한 메시지를 입력하세요...", color = Color.LightGray) },
+                        placeholder = { Text("메시지를 입력하세요...", color = Color.LightGray) },
                         shape = RoundedCornerShape(12.dp),
-                        colors = TextFieldDefaults.outlinedTextFieldColors(
+                        colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFF386641),
-                            unfocusedBorderColor = Color(0xFFE0E0E0)
+                            unfocusedBorderColor = Color(0xFFE0E0E0),
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent
                         )
                     )
 
@@ -142,15 +140,19 @@ fun PostcardScreen(
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = "작성한 엽서는 둥지에 소중히 보관됩니다.",
-                fontSize = 14.sp,
-                color = Color(0xFF386641),
-                fontWeight = FontWeight.Medium
-            )
         }
     }
-}*/
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun PostcardScreenPreview() {
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = Color(0xFFFAF7E4)
+    ) {
+        PostcardScreen(
+            onBackClick = { /* 미리보기에서는 동작 안 함 */ }
+        )
+    }
+}

@@ -76,6 +76,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val _navigateToUnlock = MutableStateFlow<Long?>(null)
     val navigateToUnlock = _navigateToUnlock.asStateFlow()
 
+    var arrowRotation by mutableStateOf(0f)
+        private set
+
+    var isArrowVisible by mutableStateOf(false)
+        private set
+
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
             val userLocation = result.lastLocation ?: return
@@ -106,7 +112,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                         latitude = pin.position.latitude
                         longitude = pin.position.longitude
                     }
+                    val bearingToPin = userLocation.bearingTo(pinLocation)
+                    arrowRotation = bearingToPin - cameraPositionState.position.bearing
                     val distance = userLocation.distanceTo(pinLocation)
+                    isArrowVisible = distance > 15f
 
                     // 10m 단위로 끊어서 업데이트 (예: 28m -> 20m)
                     distanceToSelectedPin = (distance.toInt() / 10) * 10
