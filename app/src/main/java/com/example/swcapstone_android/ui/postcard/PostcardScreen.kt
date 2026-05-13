@@ -143,16 +143,3 @@ fun PostcardScreen(
         }
     }
 }
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun PostcardScreenPreview() {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = Color(0xFFFAF7E4)
-    ) {
-        PostcardScreen(
-            onBackClick = { /* 미리보기에서는 동작 안 함 */ }
-        )
-    }
-}

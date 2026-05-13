@@ -15,12 +15,13 @@ class MypageBridge(private val accessToken: String?,
 
     @JavascriptInterface
     fun requestImageUpload() {
-        Log.d("WriteBridge", "사진 요청")
+        Log.d("UnlockBridge", "사진 요청")
         onImageRequest()
     }
 
     @JavascriptInterface
     fun requestPostcardMake() {
+        Log.d("UnlockBridge", "엽서 요청")
         onPostcardRequest()
     }
 }
