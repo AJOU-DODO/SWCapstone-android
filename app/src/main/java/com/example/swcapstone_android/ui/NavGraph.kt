@@ -23,6 +23,8 @@ import com.example.swcapstone_android.ui.unlock.UnlockScreen
 import com.example.swcapstone_android.ui.unlock.UnlockViewModel
 import com.example.swcapstone_android.ui.mypage.MypageScreen
 import com.example.swcapstone_android.ui.mypage.MypageViewModel
+import com.example.swcapstone_android.ui.postcard.PostcardScreen
+import com.example.swcapstone_android.ui.postcard.PostcardViewModel
 
 @Composable
 fun NavGraph(
@@ -141,7 +143,16 @@ fun NavGraph(
             val mypageViewModel: MypageViewModel = viewModel()
             MypageScreen(
                 onBackClick = { navController.popBackStack() },
+                onNavigateToPostcard = { navController.navigate("postcard") },
                 viewModel = mypageViewModel
+            )
+        }
+
+        composable("postcard") {
+            val postcardViewModel: PostcardViewModel = viewModel()
+            PostcardScreen(
+                onBackClick = { navController.popBackStack() },
+                viewModel = postcardViewModel
             )
         }
 
