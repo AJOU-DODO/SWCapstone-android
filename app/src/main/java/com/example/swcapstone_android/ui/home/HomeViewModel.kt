@@ -151,12 +151,15 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                             Log.d("Home", "해금 성공: $id")
 
                             _navigateToUnlock.value = id
+
+                            geofenceManager.removeGeofence(id.toString())
                         }
                     }
                     else {
                         // 이미 해금된 상태라면 바로 이동
                         Log.d("Home", "이미 해금된 둥지입니다.")
                         _navigateToUnlock.value = id
+                        geofenceManager.removeGeofence(id.toString())
                     }
                     stopTracking()
                     distanceToSelectedPin = null

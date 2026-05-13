@@ -37,4 +37,12 @@ class GeofenceManager(private val context: Context) {
             Log.d("Geofence", "10m 반경 지오펜스 등록 성공!")
         }
     }
+
+    fun removeGeofence(id: String) {
+        geofencingClient.removeGeofences(listOf(id)).addOnSuccessListener {
+            Log.d("Geofence", "지오펜스 삭제 성공: $id")
+        }.addOnFailureListener {
+            Log.e("Geofence", "지오펜스 삭제 실패: ${it.message}")
+        }
+    }
 }
