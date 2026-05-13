@@ -7,6 +7,9 @@ class MypageBridge(private val accessToken: String?,
                    private val onImageRequest: () -> Unit,
                    private val onPostcardRequest: () -> Unit
 ) {
+
+    private val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
+
     @JavascriptInterface
     fun getAccessToken(): String {
         Log.d("UnlockBridge", "데이터 가져감+${accessToken}")
@@ -21,7 +24,12 @@ class MypageBridge(private val accessToken: String?,
 
     @JavascriptInterface
     fun requestPostcardMake() {
-        Log.d("UnlockBridge", "엽서 요청")
-        onPostcardRequest()
+        mainHandler.post {
+            try {
+                onPostcardRequest()
+            } catch (e: Exception) {
+                Log.e("MypageBridge", "엽서 화면 이동 실패: ${e.message}")
+            }
+        }
     }
 }
