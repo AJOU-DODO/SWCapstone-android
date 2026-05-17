@@ -74,17 +74,10 @@ fun MypageScreen(
         Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
             if (accessToken != null) {
                 AndroidView(
-                    factory = { context ->
-                        WebView(context).apply {
-                            settings.javaScriptEnabled = true
-                            settings.domStorageEnabled = true
-                            webViewClient = WebViewClient()
-                            addJavascriptInterface(mypageBridge, "AndroidBridge")
-                            loadUrl(url)
-                        }
+                    factory = { ctx ->
+                        viewModel.getOrCreateWebView(ctx, mypageBridge, url)
                     },
                     modifier = Modifier.fillMaxSize(),
-
                     update = { webView ->
                         jsCommand?.let { command ->
                             webView.loadUrl("javascript:$command")

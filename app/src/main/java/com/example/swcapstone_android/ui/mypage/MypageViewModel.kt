@@ -6,6 +6,8 @@ import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.util.Base64
 import android.util.Log
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.compose.runtime.mutableStateOf
 import androidx.exifinterface.media.ExifInterface
 import androidx.lifecycle.AndroidViewModel
@@ -24,6 +26,8 @@ class MypageViewModel(application: Application) : AndroidViewModel(application) 
     private var _jsCommand = mutableStateOf<String?>(null)
     val jsCommand: String? get() = _jsCommand.value
 
+    private var webView: WebView? = null
+
     fun getMypageUrl(): String {
         return "${BuildConfig.WEB_URL}/mypage"
     }
@@ -36,6 +40,26 @@ class MypageViewModel(application: Application) : AndroidViewModel(application) 
         val script = "window.requestReload()"
         _jsCommand.value = script
         Log.d("MypageVM", "새로고침 스크립트 전달")
+    }
+
+    fun getOrCreateWebView(context: android.content.Context, bridge: Any, url: String): WebView {
+        if (webView == null) {
+            webView = WebView(context).apply {
+                settings.javaScriptEnabled = true
+                settings.domStorageEnabled = true
+                webViewClient = WebViewClient()
+                addJavascriptInterface(bridge, "AndroidBridge")
+                loadUrl(url)
+            }
+        }
+        return webView!!
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        webView?.removeAllViews()
+        webView?.destroy()
+        webView = null
     }
 
     fun handleImageSelection(context: android.content.Context, uri: android.net.Uri) {
