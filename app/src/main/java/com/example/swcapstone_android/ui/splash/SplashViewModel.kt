@@ -16,9 +16,17 @@ import kotlinx.coroutines.tasks.await
 
 class SplashViewModel(application: Application) : AndroidViewModel(application) {
     private val tokenManager = TokenManager(application)
+    private val geofenceManager = com.example.swcapstone_android.util.GeofenceManager(application)
 
     fun checkLoginStatus(onResult: (String) -> Unit) {
         viewModelScope.launch {
+            try {
+                geofenceManager.removeAllGeofences()
+                Log.d("Splash", "이전 지오펜스 데이터 초기화 완료")
+            } catch (e: Exception) {
+                Log.e("Splash", "지오펜스 초기화 실패: ${e.message}")
+            }
+
             val token = tokenManager.accessToken.first()
             val refreshToken = tokenManager.refreshToken.first()
             Log.d("Splash", "읽어온 토큰: $token")

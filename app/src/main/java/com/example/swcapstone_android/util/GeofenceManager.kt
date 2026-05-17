@@ -45,4 +45,18 @@ class GeofenceManager(private val context: Context) {
             Log.e("Geofence", "지오펜스 삭제 실패: ${it.message}")
         }
     }
+
+    fun removeAllGeofences() {
+        val intent = Intent(context, GeofenceBroadcastReceiver::class.java)
+        val pendingIntent = PendingIntent.getBroadcast(
+            context, 0, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+        )
+
+        geofencingClient.removeGeofences(pendingIntent).addOnSuccessListener {
+            Log.d("Geofence", "앱 시작 시 기존 지오펜스 초기화 완료")
+        }.addOnFailureListener {
+            Log.e("Geofence", "지오펜스 초기화 실패: ${it.message}")
+        }
+    }
 }
