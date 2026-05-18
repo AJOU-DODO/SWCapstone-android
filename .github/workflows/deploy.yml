@@ -2,7 +2,7 @@ name: Android CI/CD
 
 on:
   push:
-    branches: [ "main", "feat/17/distribution" ]
+    branches: [ "main", "feat/25/postcard" ]
 
 jobs:
   distribute:
