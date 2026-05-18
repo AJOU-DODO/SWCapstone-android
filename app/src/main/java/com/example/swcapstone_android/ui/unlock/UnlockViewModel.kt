@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import com.example.swcapstone_android.BuildConfig
 import com.example.swcapstone_android.data.TokenManager
+import com.example.swcapstone_android.data.etc.UrlProvider
 
 class UnlockViewModel(application: Application) : AndroidViewModel(application) {
     private val tokenManager = TokenManager(application)
@@ -11,6 +12,6 @@ class UnlockViewModel(application: Application) : AndroidViewModel(application) 
 
     // 둥지 상세 URL 생성
     fun getNestUrl(nestId: Long): String {
-        return "${BuildConfig.WEB_URL}/nests/$nestId"
+        return "${UrlProvider.baseUrl}/nests/$nestId"
     }
 }

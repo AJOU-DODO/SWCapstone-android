@@ -12,6 +12,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.swcapstone_android.BuildConfig
 import com.example.swcapstone_android.data.TokenManager
+import com.example.swcapstone_android.data.etc.UrlProvider
 import com.example.swcapstone_android.data.model.PinData
 import com.example.swcapstone_android.data.remote.RetrofitClient
 import com.example.swcapstone_android.util.GeofenceManager
@@ -44,7 +45,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         private set
 
     private val locationRequest = LocationRequest.Builder(
-        Priority.PRIORITY_HIGH_ACCURACY, 3000L // 3초마다 업데이트
+        Priority.PRIORITY_HIGH_ACCURACY, 1000L // 3초마다 업데이트
     ).build()
 
     private val geofenceManager = GeofenceManager(application)
@@ -65,7 +66,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     var showBottomSheet by mutableStateOf(false)
 
-    var selectedUrl by mutableStateOf("${BuildConfig.WEB_URL}/nests")
+    var selectedUrl by mutableStateOf("${UrlProvider.baseUrl}/nests")
 
     private val _selectedNestIds = MutableStateFlow<List<Long>>(emptyList())
     val selectedNestIds: StateFlow<List<Long>> = _selectedNestIds.asStateFlow()
@@ -97,7 +98,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                                     .bearing(userLocation.bearing)
                                     .build()
                             ),
-                            durationMs = 1000
+                            durationMs = 900
                         )
                     } catch (e: Exception) {
                         Log.d("Home", "카메라 애니메이션 중첩 혹은 취소됨: ${e.message}")
@@ -244,13 +245,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     fun onMarkerClick(pin: PinData) {
         _selectedNestIds.value = listOf(pin.id)
-        selectedUrl = "${BuildConfig.WEB_URL}/nests"
+        selectedUrl = "${UrlProvider.baseUrl}/nests"
         showBottomSheet = true
     }
 
     fun onClusterMarkerClick(ids: List<Long>) {
         _selectedNestIds.value = ids
-        selectedUrl = "${BuildConfig.WEB_URL}/nests" // 여러 개일 때 리스트를 보여줄 페이지
+        selectedUrl = "${UrlProvider.baseUrl}/nests" // 여러 개일 때 리스트를 보여줄 페이지
         showBottomSheet = true
     }
 
