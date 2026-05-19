@@ -45,6 +45,8 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.JointType
+import com.google.android.gms.maps.model.RoundCap
 import com.google.maps.android.compose.*
 import com.google.maps.android.compose.clustering.*
 import kotlinx.coroutines.launch
@@ -123,6 +125,12 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
         }
     }
 
+    LaunchedEffect(viewModel.cameraPositionState.isMoving) {
+        if (!viewModel.cameraPositionState.isMoving) {
+            viewModel.fetchWalkingPaths(viewModel.cameraPositionState.position)
+        }
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         // 구글 지도 컴포넌트
         GoogleMap(
@@ -170,6 +178,18 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                     true // 직접 처리했으므로 true 반환
                 }
             )
+
+            viewModel.walkingPaths.forEach { path ->
+                Polyline(
+                    points = path,
+                    color = Color(0xAA81C784),
+                    width = 12f,
+                    jointType = JointType.ROUND,
+                    startCap = RoundCap(),
+                    endCap = RoundCap(),
+                    zIndex = 0f
+                )
+            }
 
             viewModel.markers.find { it.id == viewModel.selectedPinId }?.let { selectedPin ->
                 Marker(
@@ -258,7 +278,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .fillMaxHeight(0.9f) // 화면의 90% 정도 높이까지 올라옴
+                        .fillMaxHeight(0.9f)
                         .padding(bottom = 16.dp)
                 ) {
                     AndroidView(

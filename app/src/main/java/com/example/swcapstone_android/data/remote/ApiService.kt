@@ -3,6 +3,7 @@ package com.example.swcapstone_android.data.remote
 import com.example.swcapstone_android.data.model.CommonResponse
 import com.example.swcapstone_android.data.model.DeviceRequest
 import com.example.swcapstone_android.data.model.MyInfoResponse
+import com.example.swcapstone_android.data.model.OsmResponse
 import com.example.swcapstone_android.data.model.NestDetailResponse
 import com.example.swcapstone_android.data.model.PinResponse
 import com.example.swcapstone_android.data.model.PostcardRequest
@@ -71,6 +72,11 @@ interface ApiService {
         @Header("Authorization") authHeader: String,
         @Body request: PostcardRequest
     ): Response<PostcardResponse>
+
+    @GET("https://overpass-api.de/api/interpreter")
+    suspend fun getOsmWalkingPaths(
+        @Query("data") query: String
+    ): Response<OsmResponse>
 }
 
 // S3 업로드를 위한 별도 인터페이스

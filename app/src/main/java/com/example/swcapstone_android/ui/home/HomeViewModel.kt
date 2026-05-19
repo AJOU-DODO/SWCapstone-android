@@ -83,6 +83,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     var isArrowVisible by mutableStateOf(false)
         private set
 
+    var walkingPaths = mutableStateListOf<List<LatLng>>() // 지도에 그릴 산책로 리스트
+        private set
+
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
             val userLocation = result.lastLocation ?: return
@@ -321,5 +324,35 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     fun dismissUnlockConfirm() {
         showUnlockConfirm = false
         startTracking()
+    }
+
+    fun fetchWalkingPaths(cameraPosition: CameraPosition) {
+        viewModelScope.launch {
+            try {
+                // 현재 카메라 중심 기준으로 적절한 범위(약 1km) 설정
+                val lat = cameraPosition.target.latitude
+                val lng = cameraPosition.target.longitude
+                val delta = 0.01 // 약 1km 범위
+
+                val query = """
+                [out:json];
+                way["highway"~"footway|path|pedestrian"]
+                (${lat - delta},${lng - delta},${lat + delta},${lng + delta});
+                out geom;
+            """.trimIndent()
+
+                val response = RetrofitClient.instance.getOsmWalkingPaths(query)
+                if (response.isSuccessful) {
+                    val newPaths = response.body()?.elements?.mapNotNull { element ->
+                        element.geometry?.map { LatLng(it.lat, it.lon) }
+                    } ?: emptyList()
+
+                    walkingPaths.clear()
+                    walkingPaths.addAll(newPaths)
+                }
+            } catch (e: Exception) {
+                Log.e("Home", "OSM 로드 실패: ${e.message}")
+            }
+        }
     }
 }
