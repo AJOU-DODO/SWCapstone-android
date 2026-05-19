@@ -1,15 +1,16 @@
 package com.example.swcapstone_android.ui
 
-import android.util.Log
 import com.example.swcapstone_android.ui.splash.SplashScreen
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navigation
+import com.example.swcapstone_android.ui.category.CategoryScreen
+import com.example.swcapstone_android.ui.category.CategoryViewModel
 import com.example.swcapstone_android.ui.home.HomeScreen
 import com.example.swcapstone_android.ui.login.LoginScreen
 import com.example.swcapstone_android.ui.login.LoginViewModel
@@ -24,6 +25,8 @@ import com.example.swcapstone_android.ui.unlock.UnlockScreen
 import com.example.swcapstone_android.ui.unlock.UnlockViewModel
 import com.example.swcapstone_android.ui.mypage.MypageScreen
 import com.example.swcapstone_android.ui.mypage.MypageViewModel
+import com.example.swcapstone_android.ui.postcard.PostcardScreen
+import com.example.swcapstone_android.ui.postcard.PostcardViewModel
 
 @Composable
 fun NavGraph(
@@ -99,7 +102,8 @@ fun NavGraph(
                 onNavigateToUnlock = { id ->
                     navController.navigate("unlock/$id")
                 },
-                onNavigateToMypage = { navController.navigate("mypage") }
+                onNavigateToMypage = { navController.navigate("mypage_graph") },
+                onNavigateToCategory = { navController.navigate("category") }
             )
         }
 
@@ -137,11 +141,44 @@ fun NavGraph(
              )
         }
 
-        composable("mypage") {
-            val mypageViewModel: MypageViewModel = viewModel()
-            MypageScreen(
+        navigation(startDestination = "mypage", route = "mypage_graph") {
+            composable("mypage") { backStackEntry ->
+                // 부모 그래프(mypage_graph)의 백스택 엔트리를 가져옴
+                val mypageGraphEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry("mypage_graph")
+                }
+                // 부모 스코프의 뷰모델로 인스턴스 생성
+                val mypageViewModel: MypageViewModel = viewModel(mypageGraphEntry)
+
+                MypageScreen(
+                    onBackClick = { navController.popBackStack() },
+                    onNavigateToPostcard = { navController.navigate("postcard") },
+                    viewModel = mypageViewModel
+                )
+            }
+
+            composable("postcard") { backStackEntry ->
+                // 똑같이 부모 그래프(mypage_graph)의 백스택 엔트리를 공유
+                val mypageGraphEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry("mypage_graph")
+                }
+                // 마이페이지와 완벽히 동일한 뷰모델 인스턴스를 보장받음
+                val mypageViewModel: MypageViewModel = viewModel(mypageGraphEntry)
+                val postcardViewModel: PostcardViewModel = viewModel()
+
+                PostcardScreen(
+                    onBackClick = { navController.popBackStack() },
+                    postcardViewModel = postcardViewModel,
+                    mypageViewModel = mypageViewModel
+                )
+            }
+        }
+
+        composable("category") {
+            val categoryViewModel: CategoryViewModel = viewModel()
+            CategoryScreen(
                 onBackClick = { navController.popBackStack() },
-                viewModel = mypageViewModel
+                viewModel = categoryViewModel
             )
         }
     }

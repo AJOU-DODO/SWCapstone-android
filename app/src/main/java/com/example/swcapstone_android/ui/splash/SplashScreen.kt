@@ -1,7 +1,5 @@
 package com.example.swcapstone_android.ui.splash
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import com.example.swcapstone_android.R
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -14,9 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.swcapstone_android.ui.theme.SWCapstoneandroidTheme
 import kotlinx.coroutines.delay
 
 @Composable

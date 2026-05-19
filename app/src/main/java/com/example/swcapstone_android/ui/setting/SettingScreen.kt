@@ -2,8 +2,10 @@ package com.example.swcapstone_android.ui.setting
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
@@ -43,6 +45,7 @@ fun SettingScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .background(Color.White)
+                .verticalScroll(rememberScrollState())
                 .padding(24.dp)
         ) {
             // --- 카테고리 설정 섹션 ---
@@ -88,8 +91,8 @@ fun SettingScreen(
 
             val radiusOptions = listOf(
                 RadiusOption("좁게 (250m)", 250),
-                RadiusOption("보통 (2000m)", 2000),
-                RadiusOption("넓게 (1000m)", 1000) // 요청하신 수치대로 1000 설정
+                RadiusOption("보통 (1000m)", 1000),
+                RadiusOption("넓게 (2000m)", 2000) // 요청하신 수치대로 1000 설정
             )
 
             Column(Modifier.selectableGroup()) {
@@ -117,6 +120,57 @@ fun SettingScreen(
                             modifier = Modifier.padding(start = 16.dp)
                         )
                     }
+                }
+            }
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 24.dp), color = Color(0xFFEEEEEE))
+
+            // --- [신규] 개발자 설정 섹션 ---
+            Text(
+                text = "개발자 설정",
+                fontSize = 14.sp,
+                color = mainGreenColor,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(text = "개발자 모드", fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                    Text(text = "커스텀 WEB_URL을 사용합니다.", fontSize = 12.sp, color = Color.Gray)
+                }
+                Switch(
+                    checked = viewModel.isDevMode,
+                    onCheckedChange = { viewModel.toggleDevMode(it) },
+                    colors = SwitchDefaults.colors(checkedThumbColor = mainGreenColor)
+                )
+            }
+
+            // 개발자 모드가 켜져 있을 때만 입력창 표시
+            androidx.compose.animation.AnimatedVisibility(visible = viewModel.isDevMode) {
+                Column(modifier = Modifier.padding(top = 16.dp)) {
+                    OutlinedTextField(
+                        value = viewModel.customWebUrl,
+                        onValueChange = { viewModel.updateCustomUrl(it) },
+                        label = { Text("테스트 WEB_URL 입력") },
+                        placeholder = { Text("https://example.vercel.app") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = mainGreenColor,
+                            focusedLabelColor = mainGreenColor
+                        )
+                    )
+                    Text(
+                        text = "현재 적용된 주소로 모든 웹뷰가 로드됩니다.",
+                        fontSize = 11.sp,
+                        color = mainGreenColor,
+                        modifier = Modifier.padding(top = 4.dp, start = 4.dp)
+                    )
                 }
             }
         }

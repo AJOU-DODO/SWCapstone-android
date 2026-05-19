@@ -12,6 +12,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.swcapstone_android.BuildConfig
 import com.example.swcapstone_android.data.TokenManager
+import com.example.swcapstone_android.data.etc.UrlProvider
 import com.example.swcapstone_android.data.model.PinData
 import com.example.swcapstone_android.data.remote.RetrofitClient
 import com.example.swcapstone_android.util.GeofenceManager
@@ -44,7 +45,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         private set
 
     private val locationRequest = LocationRequest.Builder(
-        Priority.PRIORITY_HIGH_ACCURACY, 3000L // 3초마다 업데이트
+        Priority.PRIORITY_HIGH_ACCURACY, 1000L // 3초마다 업데이트
     ).build()
 
     private val geofenceManager = GeofenceManager(application)
@@ -65,7 +66,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     var showBottomSheet by mutableStateOf(false)
 
-    var selectedUrl by mutableStateOf("${BuildConfig.WEB_URL}/nests")
+    var selectedUrl by mutableStateOf("${UrlProvider.baseUrl}/nests")
 
     private val _selectedNestIds = MutableStateFlow<List<Long>>(emptyList())
     val selectedNestIds: StateFlow<List<Long>> = _selectedNestIds.asStateFlow()
@@ -76,22 +77,35 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val _navigateToUnlock = MutableStateFlow<Long?>(null)
     val navigateToUnlock = _navigateToUnlock.asStateFlow()
 
+    var arrowRotation by mutableStateOf(0f)
+        private set
+
+    var isArrowVisible by mutableStateOf(false)
+        private set
+
+    var walkingPaths = mutableStateListOf<List<LatLng>>() // 지도에 그릴 산책로 리스트
+        private set
+
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
             val userLocation = result.lastLocation ?: return
 
             if (isTrackingMode) {
                 viewModelScope.launch {
-                    cameraPositionState.animate(
-                        update = CameraUpdateFactory.newCameraPosition(
-                            CameraPosition.Builder()
-                                .target(LatLng(userLocation.latitude, userLocation.longitude))
-                                .zoom(19f)
-                                .bearing(userLocation.bearing) //
-                                .build()
-                        ),
-                        durationMs = 1000
-                    )
+                    try {
+                        cameraPositionState.animate(
+                            update = CameraUpdateFactory.newCameraPosition(
+                                CameraPosition.Builder()
+                                    .target(LatLng(userLocation.latitude, userLocation.longitude))
+                                    .zoom(19f)
+                                    .bearing(userLocation.bearing)
+                                    .build()
+                            ),
+                            durationMs = 900
+                        )
+                    } catch (e: Exception) {
+                        Log.d("Home", "카메라 애니메이션 중첩 혹은 취소됨: ${e.message}")
+                    }
                 }
             }
 
@@ -102,7 +116,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                         latitude = pin.position.latitude
                         longitude = pin.position.longitude
                     }
+                    val bearingToPin = userLocation.bearingTo(pinLocation)
+                    arrowRotation = bearingToPin - cameraPositionState.position.bearing
                     val distance = userLocation.distanceTo(pinLocation)
+                    isArrowVisible = distance > 15f
 
                     // 10m 단위로 끊어서 업데이트 (예: 28m -> 20m)
                     distanceToSelectedPin = (distance.toInt() / 10) * 10
@@ -147,12 +164,15 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                             Log.d("Home", "해금 성공: $id")
 
                             _navigateToUnlock.value = id
+
+                            geofenceManager.removeGeofence(id.toString())
                         }
                     }
                     else {
                         // 이미 해금된 상태라면 바로 이동
                         Log.d("Home", "이미 해금된 둥지입니다.")
                         _navigateToUnlock.value = id
+                        geofenceManager.removeGeofence(id.toString())
                     }
                     stopTracking()
                     distanceToSelectedPin = null
@@ -228,13 +248,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     fun onMarkerClick(pin: PinData) {
         _selectedNestIds.value = listOf(pin.id)
-        selectedUrl = "${BuildConfig.WEB_URL}/nests"
+        selectedUrl = "${UrlProvider.baseUrl}/nests"
         showBottomSheet = true
     }
 
     fun onClusterMarkerClick(ids: List<Long>) {
         _selectedNestIds.value = ids
-        selectedUrl = "${BuildConfig.WEB_URL}/nests" // 여러 개일 때 리스트를 보여줄 페이지
+        selectedUrl = "${UrlProvider.baseUrl}/nests" // 여러 개일 때 리스트를 보여줄 페이지
         showBottomSheet = true
     }
 
@@ -268,9 +288,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         // 해당 핀 위치로 카메라 이동 (선택 사항)
         markers.find { it.id == id }?.let { pin ->
             viewModelScope.launch {
-                cameraPositionState.animate(
-                    CameraUpdateFactory.newLatLngZoom(pin.position, 17.5f)
-                )
+                try {
+                    cameraPositionState.animate(
+                        CameraUpdateFactory.newLatLngZoom(pin.position, 17.5f)
+                    )
+                } catch (e: Exception) {
+                    Log.d("Home", "핀 선택 애니메이션 취소됨")
+                }
             }
         }
     }
@@ -300,5 +324,35 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     fun dismissUnlockConfirm() {
         showUnlockConfirm = false
         startTracking()
+    }
+
+    fun fetchWalkingPaths(cameraPosition: CameraPosition) {
+        viewModelScope.launch {
+            try {
+                // 현재 카메라 중심 기준으로 적절한 범위(약 1km) 설정
+                val lat = cameraPosition.target.latitude
+                val lng = cameraPosition.target.longitude
+                val delta = 0.01 // 약 1km 범위
+
+                val query = """
+                [out:json];
+                way["highway"~"footway|path|pedestrian"]
+                (${lat - delta},${lng - delta},${lat + delta},${lng + delta});
+                out geom;
+            """.trimIndent()
+
+                val response = RetrofitClient.instance.getOsmWalkingPaths(query)
+                if (response.isSuccessful) {
+                    val newPaths = response.body()?.elements?.mapNotNull { element ->
+                        element.geometry?.map { LatLng(it.lat, it.lon) }
+                    } ?: emptyList()
+
+                    walkingPaths.clear()
+                    walkingPaths.addAll(newPaths)
+                }
+            } catch (e: Exception) {
+                Log.e("Home", "OSM 로드 실패: ${e.message}")
+            }
+        }
     }
 }

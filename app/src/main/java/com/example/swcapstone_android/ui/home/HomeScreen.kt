@@ -13,10 +13,8 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
@@ -32,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -45,7 +44,9 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.JointType
+import com.google.android.gms.maps.model.RoundCap
 import com.google.maps.android.compose.*
 import com.google.maps.android.compose.clustering.*
 import kotlinx.coroutines.launch
@@ -59,6 +60,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                onNavigateToWrite: (Double, Double) -> Unit,
                onNavigateToUnlock: (Long) -> Unit,
                onNavigateToMypage: () -> Unit,
+               onNavigateToCategory: () -> Unit,
                initialSelectedNestId: String? = null) {
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed) // 기존 Drawer 유지용
@@ -100,6 +102,8 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
 
     val unlockNestId by viewModel.navigateToUnlock.collectAsState()
 
+    val mapPaddingTop = if (viewModel.isTrackingMode) 400.dp else 0.dp
+
     LaunchedEffect(unlockNestId) {
         unlockNestId?.let { id ->
             onNavigateToUnlock(id)
@@ -116,9 +120,14 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
     }
 
     LaunchedEffect(viewModel.cameraPositionState.isMoving) {
-        // 사용자가 손가락으로 드래그하거나 줌을 조절해서 움직이는 경우
         if (viewModel.cameraPositionState.cameraMoveStartedReason == CameraMoveStartedReason.GESTURE) {
             viewModel.isTrackingMode = false // 자동 추적 중단
+        }
+    }
+
+    LaunchedEffect(viewModel.cameraPositionState.isMoving) {
+        if (!viewModel.cameraPositionState.isMoving) {
+            viewModel.fetchWalkingPaths(viewModel.cameraPositionState.position)
         }
     }
 
@@ -127,6 +136,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = viewModel.cameraPositionState,
+            contentPadding = PaddingValues(top = mapPaddingTop),
             properties = MapProperties(
                 isMyLocationEnabled = viewModel.isLocationPermissionGranted,
                 minZoomPreference = 14f,
@@ -155,19 +165,31 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                     } else {
                         // 직접 줌인 수행
                         scope.launch {
-                            val targetZoom = (currentZoom + 1.25f).coerceAtMost(19f)
-
-                            viewModel.cameraPositionState.animate(
-                                CameraUpdateFactory.newLatLngZoom(
-                                    cluster.position, // 클릭된 클러스터의 중심 좌표
-                                    targetZoom // 현재보다 1.5단계 더 확대
+                            try {
+                                val targetZoom = (currentZoom + 1.25f).coerceAtMost(19f)
+                                viewModel.cameraPositionState.animate(
+                                    CameraUpdateFactory.newLatLngZoom(cluster.position, targetZoom)
                                 )
-                            )
+                            } catch (e: Exception) {
+                                Log.d("Home", "클러스터 줌 애니메이션 취소됨")
+                            }
                         }
                     }
                     true // 직접 처리했으므로 true 반환
                 }
             )
+
+            viewModel.walkingPaths.forEach { path ->
+                Polyline(
+                    points = path,
+                    color = Color(0xAA81C784),
+                    width = 12f,
+                    jointType = JointType.ROUND,
+                    startCap = RoundCap(),
+                    endCap = RoundCap(),
+                    zIndex = 0f
+                )
+            }
 
             viewModel.markers.find { it.id == viewModel.selectedPinId }?.let { selectedPin ->
                 Marker(
@@ -175,6 +197,25 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                     icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN),
                     title = selectedPin.title,
                     zIndex = 1f // 다른 마커들보다 위에 보이게 설정
+                )
+            }
+        }
+
+        if (viewModel.isArrowVisible) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center) // 화면 중앙 혹은 상단에 배치
+                    .padding(bottom = 200.dp) // 내 위치 아이콘보다 약간 위에 띄움
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_navigation_arrow), // 화살표 아이콘
+                    contentDescription = "Direction Arrow",
+                    tint = Color(0xFF386641),
+                    modifier = Modifier
+                        .size(48.dp)
+                        .graphicsLayer {
+                            rotationZ = viewModel.arrowRotation // 계산된 각도만큼 회전
+                        }
                 )
             }
         }
@@ -196,7 +237,6 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                     fontSize = 14.sp
                 )
             }
-            Log.d("Home", "지오펜스 해제 완료")
         }
 
         // 상단 바
@@ -218,7 +258,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                             onNavigateToWrite(actualLatLng.latitude, actualLatLng.longitude)
                         }
                 }
-                    "카테고리" -> { /* URL 변경 로직 */ }
+                    "카테고리" -> { onNavigateToCategory() }
                     "마이페이지" -> { onNavigateToMypage() }
                     "설정" -> onNavigateToSetting()
                 }
@@ -238,7 +278,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .fillMaxHeight(0.9f) // 화면의 90% 정도 높이까지 올라옴
+                        .fillMaxHeight(0.9f)
                         .padding(bottom = 16.dp)
                 ) {
                     AndroidView(

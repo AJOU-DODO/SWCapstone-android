@@ -20,6 +20,7 @@ import androidx.exifinterface.media.ExifInterface
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.swcapstone_android.data.bridge.WriteBridge
+import com.example.swcapstone_android.data.etc.UrlProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -32,7 +33,7 @@ class WriteViewModel(application: Application) : AndroidViewModel(application) {
 
     private val tokenManager = com.example.swcapstone_android.data.TokenManager(application)
     val accessToken = tokenManager.accessToken // Flow<String?>
-    var writeUrl by mutableStateOf("${BuildConfig.WEB_URL}/nest-editor")
+    var writeUrl by mutableStateOf("${UrlProvider.baseUrl}/nest-editor")
         private set
 
     // 웹뷰 로딩 상태 관리
