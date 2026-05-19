@@ -329,6 +329,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     fun fetchWalkingPaths(cameraPosition: CameraPosition) {
         viewModelScope.launch {
             try {
+
+                Log.d("OSM", "OSM 시작")
                 // 현재 카메라 중심 기준으로 적절한 범위(약 1km) 설정
                 val lat = cameraPosition.target.latitude
                 val lng = cameraPosition.target.longitude
@@ -341,11 +343,18 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 out geom;
             """.trimIndent()
 
-                val response = RetrofitClient.instance.getOsmWalkingPaths(query)
+                val response = RetrofitClient.osmInstance.getOsmWalkingPaths(query)
+
+                Log.d("OSM", "응답 코드: ${response.code()}")
+
                 if (response.isSuccessful) {
+                    val body = response.body()
+                    Log.d("OSM", "Element Count: ${body?.elements?.size}")
                     val newPaths = response.body()?.elements?.mapNotNull { element ->
                         element.geometry?.map { LatLng(it.lat, it.lon) }
                     } ?: emptyList()
+
+                    Log.d("OSM", "Path Count: ${newPaths.size}")
 
                     walkingPaths.clear()
                     walkingPaths.addAll(newPaths)

@@ -73,9 +73,14 @@ interface ApiService {
         @Body request: PostcardRequest
     ): Response<PostcardResponse>
 
-    @GET("https://overpass-api.de/api/interpreter")
+    @FormUrlEncoded
+    @Headers(
+        "Accept: application/json",
+        "User-Agent: MyCapstoneApp/1.0"
+    )
+    @POST("api/interpreter") // URL 전체가 아닌 경로만 지정 (osmInstance에 베이스 주소가 있으니)
     suspend fun getOsmWalkingPaths(
-        @Query("data") query: String
+        @Field("data") query: String // encoded=true 없이 @Field 사용
     ): Response<OsmResponse>
 }
 
