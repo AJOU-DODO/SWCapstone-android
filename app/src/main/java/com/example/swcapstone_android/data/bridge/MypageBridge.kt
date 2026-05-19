@@ -19,7 +19,9 @@ class MypageBridge(private val accessToken: String?,
     @JavascriptInterface
     fun requestImageUpload() {
         Log.d("UnlockBridge", "사진 요청")
-        onImageRequest()
+        mainHandler.post {
+            onImageRequest()
+        }
     }
 
     @JavascriptInterface

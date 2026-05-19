@@ -27,8 +27,6 @@ class MypageViewModel(application: Application) : AndroidViewModel(application) 
     private var _jsCommand = mutableStateOf<String?>(null)
     val jsCommand: String? get() = _jsCommand.value
 
-    private var webView: WebView? = null
-
     fun getMypageUrl(): String {
         return "${UrlProvider.baseUrl}/mypage"
     }
@@ -43,33 +41,16 @@ class MypageViewModel(application: Application) : AndroidViewModel(application) 
         Log.d("MypageVM", "새로고침 스크립트 전달")
     }
 
-    fun getOrCreateWebView(context: android.content.Context, bridge: Any, url: String): WebView {
-        if (webView == null) {
-            webView = WebView(context).apply {
-                settings.javaScriptEnabled = true
-                settings.domStorageEnabled = true
-                webViewClient = WebViewClient()
-                addJavascriptInterface(bridge, "AndroidBridge")
-                loadUrl(url)
-            }
-        }
-        return webView!!
-    }
+    fun handleImageSelection(uri: android.net.Uri) {
+        val contentResolver = getApplication<Application>().contentResolver
 
-    override fun onCleared() {
-        super.onCleared()
-        webView?.removeAllViews()
-        webView?.destroy()
-        webView = null
-    }
-
-    fun handleImageSelection(context: android.content.Context, uri: android.net.Uri) {
-        viewModelScope.launch(Dispatchers.IO) { // 백그라운드 스레드에서 처리
+        viewModelScope.launch(Dispatchers.IO) {
             try {
-                val dataUri = context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                val dataUri = contentResolver.openInputStream(uri)?.use { inputStream ->
                     val originalBitmap = BitmapFactory.decodeStream(inputStream) ?: return@use null
 
-                    val exifInputStream = context.contentResolver.openInputStream(uri)
+                    // Exif 읽기용 스트림 다시 열기
+                    val exifInputStream = contentResolver.openInputStream(uri)
                     val orientation = exifInputStream?.use {
                         ExifInterface(it).getAttributeInt(
                             ExifInterface.TAG_ORIENTATION,
@@ -91,12 +72,11 @@ class MypageViewModel(application: Application) : AndroidViewModel(application) 
                             originalBitmap.width, originalBitmap.height,
                             matrix, true
                         )
-                        originalBitmap.recycle() // 원본은 메모리에서 해제
+                        originalBitmap.recycle()
                         rotated
                     } else {
                         originalBitmap
                     }
-
 
                     val outputStream = ByteArrayOutputStream()
                     finalBitmap.compress(Bitmap.CompressFormat.JPEG, 40, outputStream)
@@ -104,13 +84,14 @@ class MypageViewModel(application: Application) : AndroidViewModel(application) 
                     val base64String = Base64.encodeToString(outputStream.toByteArray(), Base64.NO_WRAP)
                     "data:image/jpeg;base64,$base64String"
                 } ?: return@launch
+
                 withContext(Dispatchers.Main) {
                     val script = "window.onImageReceived('$dataUri')"
                     _jsCommand.value = script
-                    Log.d("WriteVM", "전달할 스크립트 길이: ${script.length}")
+                    Log.d("MypageVM", "전달할 스크립트 설정 완료")
                 }
             } catch (e: Exception) {
-                Log.e("WriteVM", "이미지 변환 실패: ${e.message}")
+                Log.e("MypageVM", "이미지 변환 실패: ${e.message}")
             }
         }
     }

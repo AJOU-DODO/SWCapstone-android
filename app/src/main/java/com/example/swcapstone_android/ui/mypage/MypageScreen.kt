@@ -41,7 +41,7 @@ fun MypageScreen(
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        uri?.let { viewModel.handleImageSelection(context, it) }
+        uri?.let { viewModel.handleImageSelection(it) }
     }
 
     val mypageBridge = remember(accessToken) {
@@ -75,7 +75,13 @@ fun MypageScreen(
             if (accessToken != null) {
                 AndroidView(
                     factory = { ctx ->
-                        viewModel.getOrCreateWebView(ctx, mypageBridge, url)
+                        WebView(ctx).apply {
+                            settings.javaScriptEnabled = true
+                            settings.domStorageEnabled = true
+                            webViewClient = WebViewClient()
+                            addJavascriptInterface(mypageBridge, "AndroidBridge")
+                            loadUrl(url)
+                        }
                     },
                     modifier = Modifier.fillMaxSize(),
                     update = { webView ->
