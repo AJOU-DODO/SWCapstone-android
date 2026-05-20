@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.first
 import android.annotation.SuppressLint
 import android.app.Application
 import android.util.Log
+import android.os.SystemClock
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -87,6 +88,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         private set
 
     private var lastFetchedLocation: LatLng? = null
+
+    private var lastFetchTime = 0L
+    private val FETCH_COOLDOWN = 30000L
 
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
@@ -343,7 +347,15 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun fetchWalkingPathsAtUserLocation(userLatLng: LatLng) {
-        // 1. [거리 방어벽] 마지막 요청 위치와 현재 내 위치의 거리를 계산 (단위: 미터)
+        val currentTime = SystemClock.elapsedRealtime()
+
+        // 30초마다만 가능
+        if (currentTime - lastFetchTime < FETCH_COOLDOWN) {
+            val remainingTime = (FETCH_COOLDOWN - (currentTime - lastFetchTime)) / 1000
+            Log.d("OSM_OPTIMIZE", "30초 쿨타임 제한 중 (${remainingTime}초 남음). 호출 스킵.")
+            return
+        }
+
         lastFetchedLocation?.let { lastLoc ->
             val distanceResults = FloatArray(1)
             android.location.Location.distanceBetween(
@@ -351,12 +363,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 userLatLng.latitude, userLatLng.longitude,
                 distanceResults
             )
-            // 200m 미만으로 움직였다면 굳이 해외 서버를 또 찌르지 않고 스킵함!
             if (distanceResults[0] < 200f) {
                 Log.d("OSM_OPTIMIZE", "유저가 아직 많이 안 움직임 (${distanceResults[0]}m). 호출 스킵.")
                 return
             }
         }
+
+        lastFetchTime = currentTime
 
         viewModelScope.launch {
             try {
@@ -367,10 +380,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 val delta = 0.005 // 내 주변 반경 약 500m로 범위 압축 (서버 부하 감소)
 
                 val query = """
-    [out:json][timeout:90];
-    way["highway"~"footway|path|pedestrian"](${lat - delta},${lng - delta},${lat + delta},${lng + delta});
-    out geom qt;
-""".trimIndent()
+                [out:json][timeout:15];
+                way["highway"~"footway|path|pedestrian"](${lat - delta},${lng - delta},${lat + delta},${lng + delta});
+                out geom qt;
+            """.trimIndent()
 
                 val response = RetrofitClient.osmInstance.getOsmWalkingPaths(query)
 
@@ -395,6 +408,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 }
             } catch (e: Exception) {
                 Log.e("Home", "OSM 로드 실패: ${e.message}")
+                lastFetchTime = SystemClock.elapsedRealtime() - 25000L
             }
         }
     }
