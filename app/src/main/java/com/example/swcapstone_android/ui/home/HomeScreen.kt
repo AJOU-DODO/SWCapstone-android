@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -46,6 +47,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.JointType
+import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.gms.maps.model.RoundCap
 import com.google.maps.android.compose.*
 import com.google.maps.android.compose.clustering.*
@@ -84,7 +86,6 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
             }
             // hotfix에서 추가된 리스너 로직 유지
             Log.d("Home", "선택된 ID 처리: $id")
-            // 필요하다면 여기서 viewModel의 함수를 호출하면 돼
         })
     }
 
@@ -103,6 +104,14 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
     val unlockNestId by viewModel.navigateToUnlock.collectAsState()
 
     val mapPaddingTop = if (viewModel.isTrackingMode) 400.dp else 0.dp
+
+    val zoomLevel = viewModel.cameraPositionState.position.zoom
+    val dynamicWidth = when {
+        zoomLevel >= 18f -> 12f
+        zoomLevel >= 16f -> 8f
+        zoomLevel >= 14f -> 4f
+        else -> 2f
+    }
 
     LaunchedEffect(unlockNestId) {
         unlockNestId?.let { id ->
@@ -125,13 +134,8 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
         }
     }
 
-    LaunchedEffect(viewModel.cameraPositionState.isMoving) {
-        if (!viewModel.cameraPositionState.isMoving) {
-            viewModel.fetchWalkingPaths(viewModel.cameraPositionState.position)
-        }
-    }
-
     Box(modifier = Modifier.fillMaxSize()) {
+        val context = LocalContext.current
         // 구글 지도 컴포넌트
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
@@ -139,8 +143,9 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
             contentPadding = PaddingValues(top = mapPaddingTop),
             properties = MapProperties(
                 isMyLocationEnabled = viewModel.isLocationPermissionGranted,
-                minZoomPreference = 14f,
-                maxZoomPreference = 19f
+                minZoomPreference = 15f,
+                maxZoomPreference = 19f,
+                mapStyleOptions = MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style)
             ),
             onMapClick = { viewModel.showBottomSheet = false },
             onMapLoaded = {
@@ -182,8 +187,8 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
             viewModel.walkingPaths.forEach { path ->
                 Polyline(
                     points = path,
-                    color = Color(0xAA81C784),
-                    width = 12f,
+                    color = Color(0xFFF5F1E6),
+                    width = dynamicWidth,
                     jointType = JointType.ROUND,
                     startCap = RoundCap(),
                     endCap = RoundCap(),
