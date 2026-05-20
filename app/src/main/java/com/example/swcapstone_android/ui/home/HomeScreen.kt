@@ -44,6 +44,7 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.JointType
@@ -64,6 +65,17 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                onNavigateToMypage: () -> Unit,
                onNavigateToCategory: () -> Unit,
                initialSelectedNestId: String? = null) {
+    val context = LocalContext.current
+
+    var nestFullIcon by remember { mutableStateOf<BitmapDescriptor?>(null) }
+    var nestSingleIcon by remember { mutableStateOf<BitmapDescriptor?>(null) }
+    var destinationIcon by remember { mutableStateOf<BitmapDescriptor?>(null) }
+
+    LaunchedEffect(Unit) {
+        nestFullIcon = BitmapDescriptorFactory.fromResource(R.drawable.ic_nest_full)
+        nestSingleIcon = BitmapDescriptorFactory.fromResource(R.drawable.ic_nest_single)
+        destinationIcon = BitmapDescriptorFactory.fromResource(R.drawable.ic_flag_destination)
+    }
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed) // 기존 Drawer 유지용
     var isMenuExpanded by remember { mutableStateOf(false) }
@@ -135,7 +147,6 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        val context = LocalContext.current
         // 구글 지도 컴포넌트
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
@@ -181,6 +192,38 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                         }
                     }
                     true // 직접 처리했으므로 true 반환
+                },
+
+                clusterContent = { cluster ->
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.size(54.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_nest_full),
+                            contentDescription = null,
+                            tint = Color.Unspecified,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                        Text(
+                            text = cluster.size.toString(),
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            modifier = Modifier.padding(bottom = 2.dp) // 숫자가 둥지 중앙 아래쪽에 잘 걸치도록 보정
+                        )
+                    }
+                },
+                // 단일 핀일 때: 알이 하나 있는 날렵한 둥지
+                clusterItemContent = { _ ->
+                    Box(modifier = Modifier.size(40.dp)) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_nest_single),
+                            contentDescription = null,
+                            tint = Color.Unspecified,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
                 }
             )
 
@@ -192,17 +235,26 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                     jointType = JointType.ROUND,
                     startCap = RoundCap(),
                     endCap = RoundCap(),
-                    zIndex = 0f
+                    zIndex = 1f
                 )
             }
 
             viewModel.markers.find { it.id == viewModel.selectedPinId }?.let { selectedPin ->
-                Marker(
+                // 이제 destinationIcon 변수(Bitmap)는 필요 없음! 컴포즈 UI로 직접 그림
+                MarkerComposable(
                     state = MarkerState(position = selectedPin.position),
-                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN),
-                    title = selectedPin.title,
-                    zIndex = 1f // 다른 마커들보다 위에 보이게 설정
-                )
+                    keys = arrayOf(selectedPin.id),
+                    zIndex = 2f
+                ) {
+                    Box(modifier = Modifier.size(44.dp)) { // 우리가 처음에 정한 깃발 추천 크기
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_flag_destination),
+                            contentDescription = selectedPin.title,
+                            tint = Color.Unspecified, // 깃발의 다홍색 본래 색상 유지
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                }
             }
         }
 
