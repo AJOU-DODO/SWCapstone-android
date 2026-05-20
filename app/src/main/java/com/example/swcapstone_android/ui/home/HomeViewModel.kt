@@ -241,9 +241,16 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 val userLatLng = LatLng(it.latitude, it.longitude)
 
                 // 카메라를 내 위치로 이동
-                cameraPositionState.position = CameraPosition.fromLatLngZoom(
-                    LatLng(it.latitude, it.longitude), 16.5f
-                )
+                viewModelScope.launch {
+                    try {
+                        cameraPositionState.animate(
+                            update = CameraUpdateFactory.newLatLngZoom(userLatLng, 18.5f),
+                            durationMs = 400
+                        )
+                    } catch (e: Exception) {
+                        Log.d("Home", "버튼 카메라 애니메이션 취소됨")
+                    }
+                }
 
                 // 해당 좌표로 서버에 핀 요청
                 fetchNearbyPins(it.latitude, it.longitude)
