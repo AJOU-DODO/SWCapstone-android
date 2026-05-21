@@ -1,9 +1,12 @@
 package com.example.swcapstone_android.ui.home
 
+import android.os.Build
 import android.util.Log
 import android.view.ViewGroup
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -123,6 +126,19 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
         zoomLevel >= 16f -> 8f
         zoomLevel >= 14f -> 4f
         else -> 2f
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (!isGranted) { Log.d("Permission", "Notification permission denied") }
+    }
+
+    // 화면 진입 시 권한 요청
+    LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+        }
     }
 
     LaunchedEffect(unlockNestId) {
