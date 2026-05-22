@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.first
 import android.annotation.SuppressLint
 import android.app.Application
 import android.util.Log
+import android.os.SystemClock
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -83,12 +84,20 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     var isArrowVisible by mutableStateOf(false)
         private set
 
-    var walkingPaths = mutableStateListOf<List<LatLng>>() // 지도에 그릴 산책로 리스트
+    var walkingPaths by mutableStateOf<List<List<LatLng>>>(emptyList())
         private set
+
+    private var lastFetchedLocation: LatLng? = null
+
+    private var lastFetchTime = 0L
+    private val FETCH_COOLDOWN = 30000L
 
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
             val userLocation = result.lastLocation ?: return
+            val userLatLng = LatLng(userLocation.latitude, userLocation.longitude)
+
+            fetchWalkingPathsAtUserLocation(userLatLng)
 
             if (isTrackingMode) {
                 viewModelScope.launch {
@@ -219,7 +228,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    @SuppressLint("MissingPermission") // 호출 전 권한 체크를 하므로 억제
+    @SuppressLint("MissingPermission")
     fun fetchPinsAtUserLocation() {
         if (!isLocationPermissionGranted) return
 
@@ -233,13 +242,24 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             location?.let {
                 Log.d("Home", "내 위치 확인: ${it.latitude}, ${it.longitude}")
 
+                val userLatLng = LatLng(it.latitude, it.longitude)
+
                 // 카메라를 내 위치로 이동
-                cameraPositionState.position = CameraPosition.fromLatLngZoom(
-                    LatLng(it.latitude, it.longitude), 16.5f
-                )
+                viewModelScope.launch {
+                    try {
+                        cameraPositionState.animate(
+                            update = CameraUpdateFactory.newLatLngZoom(userLatLng, 18.5f),
+                            durationMs = 400
+                        )
+                    } catch (e: Exception) {
+                        Log.d("Home", "버튼 카메라 애니메이션 취소됨")
+                    }
+                }
 
                 // 해당 좌표로 서버에 핀 요청
                 fetchNearbyPins(it.latitude, it.longitude)
+
+                fetchWalkingPathsAtUserLocation(userLatLng)
             }
         }.addOnFailureListener {
             Log.e("HomeVM", "위치를 가져올 수 없음: ${it.message}")
@@ -290,7 +310,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             viewModelScope.launch {
                 try {
                     cameraPositionState.animate(
-                        CameraUpdateFactory.newLatLngZoom(pin.position, 17.5f)
+                        CameraUpdateFactory.newLatLngZoom(pin.position, 19f)
                     )
                 } catch (e: Exception) {
                     Log.d("Home", "핀 선택 애니메이션 취소됨")
@@ -326,32 +346,69 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         startTracking()
     }
 
-    fun fetchWalkingPaths(cameraPosition: CameraPosition) {
+    fun fetchWalkingPathsAtUserLocation(userLatLng: LatLng) {
+        val currentTime = SystemClock.elapsedRealtime()
+
+        // 30초마다만 가능
+        if (currentTime - lastFetchTime < FETCH_COOLDOWN) {
+            val remainingTime = (FETCH_COOLDOWN - (currentTime - lastFetchTime)) / 1000
+            Log.d("OSM_OPTIMIZE", "30초 쿨타임 제한 중 (${remainingTime}초 남음). 호출 스킵.")
+            return
+        }
+
+        lastFetchedLocation?.let { lastLoc ->
+            val distanceResults = FloatArray(1)
+            android.location.Location.distanceBetween(
+                lastLoc.latitude, lastLoc.longitude,
+                userLatLng.latitude, userLatLng.longitude,
+                distanceResults
+            )
+            if (distanceResults[0] < 200f) {
+                Log.d("OSM_OPTIMIZE", "유저가 아직 많이 안 움직임 (${distanceResults[0]}m). 호출 스킵.")
+                return
+            }
+        }
+
+        lastFetchTime = currentTime
+
         viewModelScope.launch {
             try {
-                // 현재 카메라 중심 기준으로 적절한 범위(약 1km) 설정
-                val lat = cameraPosition.target.latitude
-                val lng = cameraPosition.target.longitude
-                val delta = 0.01 // 약 1km 범위
+                Log.d("OSM", "내 위치 기준 OSM 데이터 요청 시작")
+
+                val lat = userLatLng.latitude
+                val lng = userLatLng.longitude
+                val delta = 0.005 // 내 주변 반경 약 500m로 범위 압축 (서버 부하 감소)
 
                 val query = """
-                [out:json];
-                way["highway"~"footway|path|pedestrian"]
-                (${lat - delta},${lng - delta},${lat + delta},${lng + delta});
-                out geom;
+                [out:json][timeout:15];
+                way["highway"~"footway|path|pedestrian"](${lat - delta},${lng - delta},${lat + delta},${lng + delta});
+                out geom qt;
             """.trimIndent()
 
-                val response = RetrofitClient.instance.getOsmWalkingPaths(query)
+                val response = RetrofitClient.osmInstance.getOsmWalkingPaths(query)
+
+                Log.d("OSM", "응답 코드: ${response.code()}")
+
                 if (response.isSuccessful) {
-                    val newPaths = response.body()?.elements?.mapNotNull { element ->
+                    val body = response.body()
+                    Log.d("OSM", "Element Count: ${body?.elements?.size}")
+                    val newPaths = body?.elements?.mapNotNull { element ->
                         element.geometry?.map { LatLng(it.lat, it.lon) }
                     } ?: emptyList()
 
-                    walkingPaths.clear()
-                    walkingPaths.addAll(newPaths)
+                    Log.d("OSM", "Path Count: ${newPaths.size}")
+
+                    // 🌟 [변경] 컴포즈 재그리기(Recomposition)가 확실하게 일어나도록 새 리스트 통째 할당
+                    walkingPaths = newPaths
+
+                    // 갱신 성공 시 현재 위치를 최종 호출 위치로 갱신
+                    lastFetchedLocation = userLatLng
+                } else {
+                    Log.e("OSM", "서버 에러 코드: ${response.code()}")
                 }
             } catch (e: Exception) {
                 Log.e("Home", "OSM 로드 실패: ${e.message}")
+                lastFetchTime = SystemClock.elapsedRealtime() - 25000L
             }
         }
     }

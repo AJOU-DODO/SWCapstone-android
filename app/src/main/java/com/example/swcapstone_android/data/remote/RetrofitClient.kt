@@ -53,4 +53,20 @@ object RetrofitClient {
             .connectTimeout(30, TimeUnit.SECONDS)
             .build()
     }
+
+    private val osmHttpClient = OkHttpClient.Builder()
+        .addInterceptor(loggingInterceptor)
+        .connectTimeout(30, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .build()
+
+    // OSM 전용 인스턴스
+    val osmInstance: ApiService by lazy {
+        Retrofit.Builder()
+            .baseUrl("https://overpass-api.de/")
+            .client(osmHttpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(ApiService::class.java)
+    }
 }

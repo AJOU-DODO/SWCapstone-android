@@ -1,9 +1,12 @@
 package com.example.swcapstone_android.ui.home
 
+import android.os.Build
 import android.util.Log
 import android.view.ViewGroup
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -31,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -43,9 +47,11 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.JointType
+import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.gms.maps.model.RoundCap
 import com.google.maps.android.compose.*
 import com.google.maps.android.compose.clustering.*
@@ -62,6 +68,17 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                onNavigateToMypage: () -> Unit,
                onNavigateToCategory: () -> Unit,
                initialSelectedNestId: String? = null) {
+    val context = LocalContext.current
+
+    var nestFullIcon by remember { mutableStateOf<BitmapDescriptor?>(null) }
+    var nestSingleIcon by remember { mutableStateOf<BitmapDescriptor?>(null) }
+    var destinationIcon by remember { mutableStateOf<BitmapDescriptor?>(null) }
+
+    LaunchedEffect(Unit) {
+        nestFullIcon = BitmapDescriptorFactory.fromResource(R.drawable.ic_nest_full)
+        nestSingleIcon = BitmapDescriptorFactory.fromResource(R.drawable.ic_nest_single)
+        destinationIcon = BitmapDescriptorFactory.fromResource(R.drawable.ic_flag_destination)
+    }
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed) // 기존 Drawer 유지용
     var isMenuExpanded by remember { mutableStateOf(false) }
@@ -84,7 +101,6 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
             }
             // hotfix에서 추가된 리스너 로직 유지
             Log.d("Home", "선택된 ID 처리: $id")
-            // 필요하다면 여기서 viewModel의 함수를 호출하면 돼
         })
     }
 
@@ -103,6 +119,27 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
     val unlockNestId by viewModel.navigateToUnlock.collectAsState()
 
     val mapPaddingTop = if (viewModel.isTrackingMode) 400.dp else 0.dp
+
+    val zoomLevel = viewModel.cameraPositionState.position.zoom
+    val dynamicWidth = when {
+        zoomLevel >= 18f -> 12f
+        zoomLevel >= 16f -> 8f
+        zoomLevel >= 14f -> 4f
+        else -> 2f
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (!isGranted) { Log.d("Permission", "Notification permission denied") }
+    }
+
+    // 화면 진입 시 권한 요청
+    LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
 
     LaunchedEffect(unlockNestId) {
         unlockNestId?.let { id ->
@@ -125,12 +162,6 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
         }
     }
 
-    LaunchedEffect(viewModel.cameraPositionState.isMoving) {
-        if (!viewModel.cameraPositionState.isMoving) {
-            viewModel.fetchWalkingPaths(viewModel.cameraPositionState.position)
-        }
-    }
-
     Box(modifier = Modifier.fillMaxSize()) {
         // 구글 지도 컴포넌트
         GoogleMap(
@@ -139,8 +170,9 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
             contentPadding = PaddingValues(top = mapPaddingTop),
             properties = MapProperties(
                 isMyLocationEnabled = viewModel.isLocationPermissionGranted,
-                minZoomPreference = 14f,
-                maxZoomPreference = 19f
+                minZoomPreference = 15f,
+                maxZoomPreference = 19f,
+                mapStyleOptions = MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style)
             ),
             onMapClick = { viewModel.showBottomSheet = false },
             onMapLoaded = {
@@ -176,28 +208,69 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                         }
                     }
                     true // 직접 처리했으므로 true 반환
+                },
+
+                clusterContent = { cluster ->
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.size(54.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_nest_full),
+                            contentDescription = null,
+                            tint = Color.Unspecified,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                        Text(
+                            text = cluster.size.toString(),
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            modifier = Modifier.padding(bottom = 2.dp) // 숫자가 둥지 중앙 아래쪽에 잘 걸치도록 보정
+                        )
+                    }
+                },
+                // 단일 핀일 때: 알이 하나 있는 날렵한 둥지
+                clusterItemContent = { _ ->
+                    Box(modifier = Modifier.size(40.dp)) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_nest_single),
+                            contentDescription = null,
+                            tint = Color.Unspecified,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
                 }
             )
 
             viewModel.walkingPaths.forEach { path ->
                 Polyline(
                     points = path,
-                    color = Color(0xAA81C784),
-                    width = 12f,
+                    color = Color(0xFFF5F1E6),
+                    width = dynamicWidth,
                     jointType = JointType.ROUND,
                     startCap = RoundCap(),
                     endCap = RoundCap(),
-                    zIndex = 0f
+                    zIndex = 1f
                 )
             }
 
             viewModel.markers.find { it.id == viewModel.selectedPinId }?.let { selectedPin ->
-                Marker(
+                // 이제 destinationIcon 변수(Bitmap)는 필요 없음! 컴포즈 UI로 직접 그림
+                MarkerComposable(
                     state = MarkerState(position = selectedPin.position),
-                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN),
-                    title = selectedPin.title,
-                    zIndex = 1f // 다른 마커들보다 위에 보이게 설정
-                )
+                    keys = arrayOf(selectedPin.id),
+                    zIndex = 2f
+                ) {
+                    Box(modifier = Modifier.size(44.dp)) { // 우리가 처음에 정한 깃발 추천 크기
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_flag_destination),
+                            contentDescription = selectedPin.title,
+                            tint = Color.Unspecified, // 깃발의 다홍색 본래 색상 유지
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                }
             }
         }
 
