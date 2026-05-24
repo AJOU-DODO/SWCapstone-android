@@ -1,5 +1,6 @@
 package com.example.swcapstone_android.ui
 
+import android.R.attr.type
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
@@ -24,10 +25,12 @@ import com.example.swcapstone_android.ui.theme.SWCapstoneandroidTheme
 class MainActivity : ComponentActivity() {
 
     private var nestIdState by mutableStateOf<String?>(null)
+    private var notificationTypeState: Int by mutableStateOf<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val initialNestId = intent.getStringExtra("SELECTED_NEST_ID")
+        val initialNotificationType = intent.getStringExtra("NOTIFICATION_TYPE")
         enableEdgeToEdge()
 
         setContent {
@@ -48,7 +51,8 @@ class MainActivity : ComponentActivity() {
                     ) { innerPadding ->
                     NavGraph(modifier = Modifier.padding(innerPadding),
                         navController = navController,
-                        startSelectedNestId = nestIdState ?: initialNestId)
+                        startSelectedNestId = nestIdState ?: initialNestId),
+                        startNotificationType = notificationTypeState ?: initialNotificationType
                 }
             }
         }
@@ -59,6 +63,7 @@ class MainActivity : ComponentActivity() {
         val nestId = intent.getStringExtra("SELECTED_NEST_ID")
         if (nestId != null) {
             nestIdState = nestId
+            notificationTypeState = type
         }
     }
 }

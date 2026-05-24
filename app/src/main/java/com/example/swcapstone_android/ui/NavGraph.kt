@@ -32,7 +32,8 @@ import com.example.swcapstone_android.ui.postcard.PostcardViewModel
 fun NavGraph(
     modifier: Modifier = Modifier,
     navController: NavHostController,
-    startSelectedNestId: String? = null
+    startSelectedNestId: String? = null,
+
 ){
     NavHost(
         navController = navController,

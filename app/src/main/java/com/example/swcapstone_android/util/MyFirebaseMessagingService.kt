@@ -23,18 +23,21 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
 
-        val title = remoteMessage.data["title"]
-            ?: remoteMessage.notification?.title
+        val data = remoteMessage.data
+        val type = data["type"]
+        val nestId = data["nestId"]
 
-        val body = remoteMessage.data["body"]
-            ?: remoteMessage.notification?.body
+        val title = remoteMessage.notification?.title
+        val body = remoteMessage.notification?.body
 
-        sendNotification(title, body)
+        sendNotification(title, body, type, nestId)
     }
 
-    private fun sendNotification(title: String?, body: String?) {
+    private fun sendNotification(title: String?, body: String?, type: String?, nestId: String?) {
         val intent = Intent(this, MainActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            putExtra("NOTIFICATION_TYPE", type)
+            putExtra("SELECTED_NEST_ID", nestId)
         }
         val pendingIntent = PendingIntent.getActivity(
             this, 0, intent,
@@ -57,6 +60,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             notificationManager.createNotificationChannel(channel)
         }
 
-        notificationManager.notify(0, notificationBuilder.build())
+        notificationManager.notify(nestId?.hashCode() ?: 0, notificationBuilder.build())
     }
 }
