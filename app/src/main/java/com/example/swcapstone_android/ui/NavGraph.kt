@@ -1,13 +1,16 @@
 package com.example.swcapstone_android.ui
 
+import android.app.Notification
 import com.example.swcapstone_android.ui.splash.SplashScreen
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import androidx.navigation.navigation
 import com.example.swcapstone_android.ui.category.CategoryScreen
 import com.example.swcapstone_android.ui.category.CategoryViewModel
@@ -27,13 +30,15 @@ import com.example.swcapstone_android.ui.mypage.MypageScreen
 import com.example.swcapstone_android.ui.mypage.MypageViewModel
 import com.example.swcapstone_android.ui.postcard.PostcardScreen
 import com.example.swcapstone_android.ui.postcard.PostcardViewModel
+import com.example.swcapstone_android.ui.alarm.AlarmScreen
+import com.example.swcapstone_android.ui.alarm.AlarmViewModel
 
 @Composable
 fun NavGraph(
     modifier: Modifier = Modifier,
     navController: NavHostController,
     startSelectedNestId: String? = null,
-
+    startNotificationType: String? = null
 ){
     NavHost(
         navController = navController,
@@ -49,7 +54,11 @@ fun NavGraph(
                     var finalRoute = destination
 
                     if (destination == Screen.HomeScreen.route && startSelectedNestId != null) {
-                        finalRoute = Screen.HomeScreen.route + "?nestId=$startSelectedNestId"
+                        finalRoute = if (startNotificationType == "NEST_LIKE") {
+                            "alarm_screen/$startSelectedNestId"
+                        } else {
+                            Screen.HomeScreen.route + "?initialSelectedNestId=$startSelectedNestId"
+                        }
                     }
 
                     navController.navigate(finalRoute) {
@@ -88,10 +97,17 @@ fun NavGraph(
         }
 
         composable(
-            Screen.HomeScreen.route + "?nestId={nestId}"
+            route = Screen.HomeScreen.route + "?initialSelectedNestId={initialSelectedNestId}",
+            arguments = listOf(
+                navArgument("initialSelectedNestId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
         ) { backStackEntry ->
-            val nestId = backStackEntry.arguments?.getString("nestId")
-            val finalNestId = nestId ?: startSelectedNestId
+            val argumentNestId = backStackEntry.arguments?.getString("initialSelectedNestId")
+            val finalNestId = argumentNestId ?: startSelectedNestId
             HomeScreen(
                 initialSelectedNestId = finalNestId,
                 onNavigateToSetting = {
@@ -105,6 +121,27 @@ fun NavGraph(
                 },
                 onNavigateToMypage = { navController.navigate("mypage_graph") },
                 onNavigateToCategory = { navController.navigate("category") }
+            )
+        }
+
+        composable(
+            route = "alarm_screen/{nestId}",
+            arguments = listOf(
+                navArgument("nestId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val nestId = backStackEntry.arguments?.getString("nestId") ?: ""
+            val alarmViewModel: AlarmViewModel = viewModel()
+
+            AlarmScreen(
+                nestId = nestId,
+                viewModel = alarmViewModel,
+                onBackClick = {
+                    // 뒤로가기 시 알림 화면 스택을 터트리며 메인 홈 지도로 자연스럽게 복귀
+                    navController.navigate(Screen.HomeScreen.route) {
+                        popUpTo("alarm_screen/$nestId") { inclusive = true }
+                    }
+                }
             )
         }
 

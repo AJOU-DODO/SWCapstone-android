@@ -27,21 +27,32 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         val type = data["type"]
         val nestId = data["nestId"]
 
-        val title = remoteMessage.notification?.title
-        val body = remoteMessage.notification?.body
+        val title = remoteMessage.notification?.title ?: data["title"]
+        val body = remoteMessage.notification?.body ?: data["body"]
+
+        Log.d("FCM_SERVICE", "알림 수신 성공 -> type: $type, nestId: $nestId, title: $title")
 
         sendNotification(title, body, type, nestId)
     }
 
     private fun sendNotification(title: String?, body: String?, type: String?, nestId: String?) {
         val intent = Intent(this, MainActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
             putExtra("NOTIFICATION_TYPE", type)
             putExtra("SELECTED_NEST_ID", nestId)
         }
+        val requestCode = nestId?.hashCode() ?: 0
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+        } else {
+            PendingIntent.FLAG_UPDATE_CURRENT
+        }
+
         val pendingIntent = PendingIntent.getActivity(
-            this, 0, intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            this,
+            requestCode,
+            intent,
+            flags
         )
 
         val channelId = "dodo_journey_channel"
