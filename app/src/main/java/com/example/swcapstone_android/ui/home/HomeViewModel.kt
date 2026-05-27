@@ -3,6 +3,7 @@ package com.example.swcapstone_android.ui.home
 import kotlinx.coroutines.flow.first
 import android.annotation.SuppressLint
 import android.app.Application
+import android.content.Context
 import android.util.Log
 import android.os.SystemClock
 import androidx.compose.runtime.getValue
@@ -46,7 +47,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         private set
 
     private val locationRequest = LocationRequest.Builder(
-        Priority.PRIORITY_HIGH_ACCURACY, 1000L // 3초마다 업데이트
+        Priority.PRIORITY_HIGH_ACCURACY, 1000L
     ).build()
 
     private val geofenceManager = GeofenceManager(application)
@@ -54,6 +55,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     val accessToken = tokenManager.accessToken
     private val fusedLocationClient = LocationServices.getFusedLocationProviderClient(application)
     // 현재 지도 카메라 상태
+
+    private val sharedPreferences = application.getSharedPreferences("dodo_settings", Context.MODE_PRIVATE)
     var cameraPositionState by mutableStateOf<CameraPositionState>(CameraPositionState(
         position = CameraPosition.fromLatLngZoom(LatLng(37.5665, 126.9780), 16.5f)
     ))
@@ -91,6 +94,24 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private var lastFetchTime = 0L
     private val FETCH_COOLDOWN = 30000L
+
+    private fun getSavedRadius(): Int {
+        val radiusRaw = sharedPreferences.all["search_radius"] ?: 2000
+        return when (radiusRaw) {
+            is String -> radiusRaw.toIntOrNull() ?: 2000
+            is Int -> radiusRaw
+            else -> 2000
+        }
+    }
+
+    private fun getZoomLevelForRadius(radius: Int): Float {
+        return when (radius) {
+            500 -> 16.5f   // 500m 반경은 좁고 정밀하게
+            1000 -> 15.5f  // 1000m 반경은 표준
+            2000 -> 14.5f  // 2000m 반경은 넓게 한눈에
+            else -> 14.5f
+        }
+    }
 
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
@@ -244,11 +265,14 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
                 val userLatLng = LatLng(it.latitude, it.longitude)
 
+                val currentRadius = getSavedRadius()
+                val dynamicZoom = getZoomLevelForRadius(currentRadius)
+
                 // 카메라를 내 위치로 이동
                 viewModelScope.launch {
                     try {
                         cameraPositionState.animate(
-                            update = CameraUpdateFactory.newLatLngZoom(userLatLng, 18.5f),
+                            update = CameraUpdateFactory.newLatLngZoom(userLatLng, dynamicZoom),
                             durationMs = 400
                         )
                     } catch (e: Exception) {
@@ -363,7 +387,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 userLatLng.latitude, userLatLng.longitude,
                 distanceResults
             )
-            if (distanceResults[0] < 200f) {
+            if (distanceResults[0] < 150f) {
                 Log.d("OSM_OPTIMIZE", "유저가 아직 많이 안 움직임 (${distanceResults[0]}m). 호출 스킵.")
                 return
             }
