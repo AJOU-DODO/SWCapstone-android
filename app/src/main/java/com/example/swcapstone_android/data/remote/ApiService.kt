@@ -2,6 +2,7 @@ package com.example.swcapstone_android.data.remote
 
 import com.example.swcapstone_android.data.model.CommonResponse
 import com.example.swcapstone_android.data.model.DeviceRequest
+import com.example.swcapstone_android.data.model.InterestResponse
 import com.example.swcapstone_android.data.model.MyInfoResponse
 import com.example.swcapstone_android.data.model.OsmResponse
 import com.example.swcapstone_android.data.model.NestDetailResponse
@@ -45,7 +46,9 @@ interface ApiService {
     suspend fun getNearbyPins(
         @Header("Authorization") token: String,
         @Query("latitude") latitude: Double,
-        @Query("longitude") longitude: Double
+        @Query("longitude") longitude: Double,
+        @Query("radiusMeter") radiusMeter: Int,
+        @Query("categoryId") categoryIds: List<Int>? = null
     ): Response<PinResponse>
 
     @POST("/api/v1/devices")
@@ -58,7 +61,12 @@ interface ApiService {
     suspend fun getNestDetail(
         @Header("Authorization") authHeader: String,
         @Path("id") id: Long
-    ): Response<NestDetailResponse> // NestDetailResponse는 아래 제공된 JSON 구조에 맞춘 모델
+    ): Response<NestDetailResponse>
+
+    @GET("/api/v1/users/interests")
+    suspend fun getUserInterests(
+        @Header("Authorization") token: String
+    ): Response<InterestResponse>
 
     // 둥지 해금 요청
     @POST("/api/v1/nests/{id}/unlock")

@@ -57,6 +57,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     // 현재 지도 카메라 상태
 
     private val sharedPreferences = application.getSharedPreferences("dodo_settings", Context.MODE_PRIVATE)
+    private fun isCategoryFilterEnabled(): Boolean {
+        return sharedPreferences.getBoolean("category_enabled", true)
+    }
     var cameraPositionState by mutableStateOf<CameraPositionState>(CameraPositionState(
         position = CameraPosition.fromLatLngZoom(LatLng(37.5665, 126.9780), 16.5f)
     ))
@@ -234,7 +237,30 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 val token = tokenManager.accessToken.first() ?: ""
                 val authHeader = "Bearer $token"
 
-                val response = RetrofitClient.instance.getNearbyPins(authHeader, lat, lng)
+                val currentRadius = getSavedRadius()
+
+                val categoryIdsParam = if (isCategoryFilterEnabled()) {
+                    Log.d("Home", "카테고리 필터 작동 중: 유저 관심사 조회 시도")
+
+                    val interestResponse = RetrofitClient.instance.getUserInterests(authHeader)
+                    if (interestResponse.isSuccessful && interestResponse.body() != null) {
+                        interestResponse.body()?.data?.map { it.id } ?: emptyList()
+                    } else {
+                        Log.e("Home", "유저 관심사 가져오기 실패: ${interestResponse.code()}")
+                        emptyList()
+                    }
+                } else {
+                    Log.d("Home", "카테고리 필터 꺼짐: 전체 핀 조회")
+                    null
+                }
+
+                val response = RetrofitClient.instance.getNearbyPins(
+                    token = authHeader,
+                    latitude = lat,
+                    longitude = lng,
+                    radiusMeter = currentRadius,
+                    categoryIds = categoryIdsParam
+                )
                 if (response.isSuccessful && response.body() != null) {
                     // 기존 마커 비우고 새로 추가
                     markers.clear()
