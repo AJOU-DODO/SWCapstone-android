@@ -490,22 +490,33 @@ fun HomeBottomButtons(
             verticalArrangement = Arrangement.spacedBy(12.dp) // 버튼 사이 간격
         ) {
             // 확장될 서브 메뉴들
-            val menuItems = listOf("설정", "글쓰기", "마이페이지", "카테고리")
+            val menuItems = remember {
+                listOf(
+                    "설정" to R.drawable.ic_setting,
+                    "글쓰기" to R.drawable.ic_write,
+                    "마이페이지" to R.drawable.ic_mypage,
+                    "카테고리" to R.drawable.ic_category
+                )
+            }
 
-            menuItems.forEachIndexed { index, label ->
+            menuItems.forEachIndexed { index, menuItem ->
                 AnimatedVisibility(
                     visible = isMenuExpanded,
                     enter = fadeIn() + expandVertically() + slideInVertically { it / 2 },
                     exit = fadeOut() + shrinkVertically() + slideOutVertically { it / 2 }
                 ) {
                     SmallFloatingActionButton(
-                        onClick = { onSubMenuClick(label) },
+                        onClick = { onSubMenuClick(menuItem.first) },
                         containerColor = Color(0xFFF1F3E9),
                         shape = CircleShape,
                         modifier = Modifier.size(48.dp)
                     ) {
-                        // 아이콘이 없다면 첫 글자만 텍스트로 표시하거나 공용 아이콘 사용
-                        Text(text = label.take(1), color = Color(0xFF386641), fontWeight = FontWeight.Bold)
+                        Icon(
+                            painter = painterResource(id = menuItem.second), // 🛠️ .second로 드로어블 ID 전달
+                            contentDescription = menuItem.first,
+                            tint = Color(0xFF386641),
+                            modifier = Modifier.size(24.dp) // 아이콘 크기 알맞게 조정
+                        )
                     }
                 }
             }
