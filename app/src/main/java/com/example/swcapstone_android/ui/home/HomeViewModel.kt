@@ -262,6 +262,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                     categoryIds = categoryIdsParam
                 )
                 if (response.isSuccessful && response.body() != null) {
+                    Log.d("Home", "핀 API 성공 응답 객체: $response")
                     // 기존 마커 비우고 새로 추가
                     markers.clear()
                     response.body()?.data?.let { markers.addAll(it) }

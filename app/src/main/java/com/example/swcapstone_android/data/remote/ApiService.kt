@@ -48,7 +48,7 @@ interface ApiService {
         @Query("latitude") latitude: Double,
         @Query("longitude") longitude: Double,
         @Query("radiusMeter") radiusMeter: Int,
-        @Query("categoryId") categoryIds: List<Int>? = null
+        @Query("categoryIds") categoryIds: List<Int>? = null
     ): Response<PinResponse>
 
     @POST("/api/v1/devices")
