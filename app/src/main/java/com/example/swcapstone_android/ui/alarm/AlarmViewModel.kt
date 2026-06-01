@@ -22,10 +22,10 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
         private set
 
     fun initData(nestId: String) {
-        alarmUrl = "${UrlProvider.baseUrl}/nests/$nestId"
-
         viewModelScope.launch {
             accessTokenCache = tokenManager.accessToken.first() ?: ""
+            alarmUrl = "${UrlProvider.baseUrl}/nests/$nestId"
         }
+
     }
 }

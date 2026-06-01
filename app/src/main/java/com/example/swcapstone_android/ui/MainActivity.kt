@@ -33,8 +33,6 @@ class MainActivity : ComponentActivity() {
         val initialNestId = intent.getStringExtra("SELECTED_NEST_ID")
         val initialNotificationType = intent.getStringExtra("NOTIFICATION_TYPE")
 
-        nestIdState = initialNestId
-        notificationTypeState = initialNotificationType
         enableEdgeToEdge()
 
         setContent {
