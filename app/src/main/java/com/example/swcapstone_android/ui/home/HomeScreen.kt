@@ -150,15 +150,16 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
 
     // 화면 진입 시 권한 요청
     LaunchedEffect(locationPermissionState.status.isGranted, viewModel.markers, initialSelectedNestId) {
+            // GPS
         if (!locationPermissionState.status.isGranted) {
             locationPermissionState.launchPermissionRequest()
-        }
-        viewModel.updatePermissionStatus(locationPermissionState.status.isGranted)
-    }
+        } else {
+            viewModel.updatePermissionStatus(true)
 
-    LaunchedEffect(viewModel.cameraPositionState.isMoving) {
-        if (viewModel.cameraPositionState.cameraMoveStartedReason == CameraMoveStartedReason.GESTURE) {
-            viewModel.isTrackingMode = false // 자동 추적 중단
+            // 알림
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                permissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+            }
         }
     }
 
