@@ -136,6 +136,8 @@ fun PostcardScreen(
                         placeholder = { Text("메시지를 입력하세요...", color = Color.LightGray) },
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color(0xFF1A1A1A),
+                            unfocusedTextColor = Color(0xFF1A1A1A),
                             focusedBorderColor = Color(0xFF386641),
                             unfocusedBorderColor = Color(0xFFE0E0E0),
                             focusedContainerColor = Color.Transparent,
