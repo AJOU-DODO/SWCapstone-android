@@ -17,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -90,7 +91,9 @@ fun LoginScreen(
                     // TODO: 실제 구글 로그인 로직 호출
                     showWebView = true // 테스트용
                 },
-                modifier = Modifier.padding(bottom = 80.dp) // 바닥에서의 여백
+                modifier = Modifier
+                    .padding(bottom = 80.dp) // 바닥에서의 여백
+                    .testTag("google_login_btn")
             )
         }
     }

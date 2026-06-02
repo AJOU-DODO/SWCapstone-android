@@ -33,6 +33,12 @@ class MainActivity : ComponentActivity() {
         val initialNestId = intent.getStringExtra("SELECTED_NEST_ID")
         val initialNotificationType = intent.getStringExtra("NOTIFICATION_TYPE")
 
+        if (initialNestId != null) {
+            nestIdState = initialNestId
+            notificationTypeState = initialNotificationType
+            Log.d("FCM_ROUTING", "앱 종료 상태에서 알림으로 구동됨 -> initialNestId: $initialNestId")
+        }
+
         enableEdgeToEdge()
 
         setContent {
@@ -45,7 +51,7 @@ class MainActivity : ComponentActivity() {
 
                     Log.d("FCM_ROUTING", "알림 처리 시작 -> type: $type, nestId: $id")
 
-                    if (type == "NEST_LIKE") {
+                    if (type == "NEST") {
                         Log.d("FCM_ROUTING", "좋아요")
                         navController.navigate("alarm_screen/$id") {
                             launchSingleTop = true
@@ -93,5 +99,9 @@ class MainActivity : ComponentActivity() {
             nestIdState = nestId
             notificationTypeState = notificationType
         }
+    }
+
+    fun triggerNewIntentForTest(intent: Intent) {
+        onNewIntent(intent)
     }
 }
