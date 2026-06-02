@@ -36,7 +36,11 @@ class MainActivity : ComponentActivity() {
         if (initialNestId != null) {
             nestIdState = initialNestId
             notificationTypeState = initialNotificationType
-            Log.d("FCM_ROUTING", "앱 종료 상태에서 알림으로 구동됨 -> initialNestId: $initialNestId")
+            Log.d("FCM_ROUTING", "앱 종료 상태에서 알림 구동 (NEST) -> nestId: $initialNestId")
+        } else if (initialNotificationType == "POSTCARD") {
+            nestIdState = "0"
+            notificationTypeState = initialNotificationType
+            Log.d("FCM_ROUTING", "앱 종료 상태에서 알림 구동 (POSTCARD) -> type만 감지")
         }
 
         enableEdgeToEdge()
@@ -51,15 +55,8 @@ class MainActivity : ComponentActivity() {
 
                     Log.d("FCM_ROUTING", "알림 처리 시작 -> type: $type, nestId: $id")
 
-                    if (type == "NEST") {
-                        Log.d("FCM_ROUTING", "좋아요")
-                        navController.navigate("alarm_screen/$id") {
-                            launchSingleTop = true
-                        }
-                    } else {
-                        navController.navigate("home?initialSelectedNestId=$id") {
-                            launchSingleTop = true
-                        }
+                    navController.navigate("alarm_screen/$id?type=$type") {
+                        launchSingleTop = true
                     }
 
                     nestIdState = null

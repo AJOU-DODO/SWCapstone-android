@@ -1,6 +1,7 @@
 package com.example.swcapstone_android.ui.alarm
 
 import android.app.Application
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -21,11 +22,19 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
     var accessTokenCache: String = ""
         private set
 
-    fun initData(nestId: String) {
+    fun initData(nestId: String, type: String?) {
         viewModelScope.launch {
             accessTokenCache = tokenManager.accessToken.first() ?: ""
-            alarmUrl = "${UrlProvider.baseUrl}/nests/$nestId"
-        }
 
+            when (type) {
+                "POSTCARD" -> {
+                    alarmUrl = "${UrlProvider.baseUrl}/mypage/posts?tab=sent"
+                }
+                else -> {
+                    alarmUrl = "${UrlProvider.baseUrl}/nests/$nestId"
+                }
+            }
+            Log.d("ALARM_VIEWMODEL", "최종 브릿지 웹뷰 URL 매칭 완료 -> $alarmUrl")
+        }
     }
 }

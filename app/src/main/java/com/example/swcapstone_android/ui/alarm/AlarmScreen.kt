@@ -23,11 +23,12 @@ import com.example.swcapstone_android.data.bridge.AlarmWebBridge
 @Composable
 fun AlarmScreen(
     nestId: String,
+    notificationType: String?,
     viewModel: AlarmViewModel,
     onBackClick: () -> Unit
 ) {
     LaunchedEffect(nestId) {
-        viewModel.initData(nestId)
+        viewModel.initData(nestId, notificationType)
     }
 
     val alarmBridge = remember(viewModel) {
@@ -37,7 +38,7 @@ fun AlarmScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("탐험 카드 확인", fontWeight = FontWeight.Bold, color = Color(0xFF386641)) },
+                title = { Text("반응 확인", fontWeight = FontWeight.Bold, color = Color(0xFF386641)) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(

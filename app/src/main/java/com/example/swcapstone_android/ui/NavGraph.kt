@@ -54,8 +54,8 @@ fun NavGraph(
                     var finalRoute = destination
 
                     if (destination == Screen.HomeScreen.route && startSelectedNestId != null) {
-                        finalRoute = if (startNotificationType == "NEST_LIKE") {
-                            "alarm_screen/$startSelectedNestId"
+                        finalRoute = if (startNotificationType == "NEST" || startNotificationType == "POSTCARD") {
+                            "alarm_screen/$startSelectedNestId?type=$startNotificationType"
                         } else {
                             Screen.HomeScreen.route + "?initialSelectedNestId=$startSelectedNestId"
                         }
@@ -125,21 +125,30 @@ fun NavGraph(
         }
 
         composable(
-            route = "alarm_screen/{nestId}",
+            route = "alarm_screen/{nestId}?type={type}",
             arguments = listOf(
-                navArgument("nestId") { type = NavType.StringType }
+                navArgument("nestId") { type = NavType.StringType },
+                navArgument("type") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
             )
         ) { backStackEntry ->
             val nestId = backStackEntry.arguments?.getString("nestId") ?: ""
+            // 주소창에서 추출한 type 값 (NEST 또는 POSTCARD)
+            val notificationType = backStackEntry.arguments?.getString("type")
+
             val alarmViewModel: AlarmViewModel = viewModel()
 
             AlarmScreen(
                 nestId = nestId,
+                notificationType = notificationType, // 🌟 AlarmScreen 컴포저블 내부로 꽂아주기!
                 viewModel = alarmViewModel,
                 onBackClick = {
-                    // 뒤로가기 시 알림 화면 스택을 터트리며 메인 홈 지도로 자연스럽게 복귀
                     navController.navigate(Screen.HomeScreen.route) {
-                        popUpTo("alarm_screen/$nestId") { inclusive = true }
+                        // 뒤로가기 시 쿼리스트링을 포함한 정확한 라우트 매칭 청소
+                        popUpTo("alarm_screen/$nestId?type=$notificationType") { inclusive = true }
                     }
                 }
             )
