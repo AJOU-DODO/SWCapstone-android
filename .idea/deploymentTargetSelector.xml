@@ -26,7 +26,7 @@
       </SelectionState>
       <SelectionState runConfigName="NavGraphTest">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-06-01T10:10:07.909952100Z">
+        <DropdownSelection timestamp="2026-06-02T07:34:06.605149Z">
           <Target type="DEFAULT_BOOT">
             <handle>
               <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\chai\.android\avd\Pixel_4.avd" />
