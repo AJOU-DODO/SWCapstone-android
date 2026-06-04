@@ -424,7 +424,7 @@ fun HomeTopBar(modifier: Modifier) {
             .fillMaxWidth()
             .height(64.dp)
             .testTag("home_top_bar"),
-        color = Color(0xFFF1F3E9),
+        color = Color(0xFFFAF7E4),
         shadowElevation = 2.dp
     ) {
         Row(
