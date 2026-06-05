@@ -232,12 +232,18 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                         )
                     }
                 },
-                // 단일 핀일 때: 알이 하나 있는 날렵한 둥지
-                clusterItemContent = { _ ->
-                    Box(modifier = Modifier.size(40.dp)) {
+
+                clusterItemContent = { pin ->
+                    Box(modifier = Modifier.size(44.dp)) {
+                        val iconRes = if (pin.isAd) {
+                            R.drawable.ic_nest_gift
+                        } else {
+                            R.drawable.ic_nest_single
+                        }
+
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_nest_single),
-                            contentDescription = null,
+                            painter = painterResource(id = iconRes),
+                            contentDescription = if (pin.isAd) "광고 둥지" else "일반 둥지",
                             tint = Color.Unspecified,
                             modifier = Modifier.fillMaxSize()
                         )

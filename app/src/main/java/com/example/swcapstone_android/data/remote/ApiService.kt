@@ -51,6 +51,11 @@ interface ApiService {
         @Query("categoryIds") categoryIds: List<Int>? = null
     ): Response<PinResponse>
 
+    @GET("api/v1/nests/ad-pins")
+    suspend fun getAdPins(
+        @Header("Authorization") token: String
+    ): Response<PinResponse>
+
     @POST("/api/v1/devices")
     suspend fun registerDevice(
         @Header("Authorization") token: String,

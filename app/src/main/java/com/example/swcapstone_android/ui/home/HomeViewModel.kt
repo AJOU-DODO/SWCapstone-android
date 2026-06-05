@@ -28,6 +28,7 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.tasks.CancellationTokenSource
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -254,22 +255,46 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                     null
                 }
 
-                val response = RetrofitClient.instance.getNearbyPins(
-                    token = authHeader,
-                    latitude = lat,
-                    longitude = lng,
-                    radiusMeter = currentRadius,
-                    categoryIds = categoryIdsParam
-                )
-                if (response.isSuccessful && response.body() != null) {
-                    Log.d("Home", "핀 API 성공 응답 객체: $response")
-                    // 기존 마커 비우고 새로 추가
-                    markers.clear()
-                    response.body()?.data?.let { markers.addAll(it) }
-                    Log.d("Home", "핀 가져오기 성공: ${markers.size}개")
-                } else {
-                    Log.e("Home", "핀 가져오기 실패: ${response.code()}")
+                val normalPinsDeferred = async {
+                    RetrofitClient.instance.getNearbyPins(
+                        token = authHeader,
+                        latitude = lat,
+                        longitude = lng,
+                        radiusMeter = currentRadius,
+                        categoryIds = categoryIdsParam
+                    )
                 }
+
+                val adPinsDeferred = async {
+                    RetrofitClient.instance.getAdPins(token = authHeader)
+                }
+
+                val normalResponse = normalPinsDeferred.await()
+                val adResponse = adPinsDeferred.await()
+
+                val temporaryList = mutableListOf<PinData>()
+
+                if (normalResponse.isSuccessful && normalResponse.body() != null) {
+                    normalResponse.body()?.data?.let { normalList ->
+                        temporaryList.addAll(normalList.map { it.copy(isAd = false) })
+                    }
+                    Log.d("Home", "일반 핀 로드 완료: ${normalResponse.body()?.data?.size ?: 0}개")
+                } else {
+                    Log.e("Home", "일반 핀 가져오기 실패: ${normalResponse.code()}")
+                }
+
+                if (adResponse.isSuccessful && adResponse.body() != null) {
+                    adResponse.body()?.data?.let { adList ->
+                        temporaryList.addAll(adList.map { it.copy(isAd = true) })
+                    }
+                    Log.d("Home", "광고 핀 로드 완료: ${adResponse.body()?.data?.size ?: 0}개")
+                } else {
+                    Log.e("Home", "광고 핀 가져오기 실패: ${adResponse.code()}")
+                }
+
+                markers.clear()
+                markers.addAll(temporaryList)
+                Log.d("Home", "통합 마커 동기화 총 완료: ${markers.size}개")
             } catch (e: Exception) {
                 Log.e("Home", "네트워크 오류: ${e.message}")
             }
