@@ -160,6 +160,7 @@ fun NavGraph(
                 onBackClick = {
                     navController.popBackStack() // 뒤로가기
                 },
+                onInquiryClick = { navController.navigate("inquiry") },
                 viewModel = settingViewModel
             )
         }
