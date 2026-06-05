@@ -36,7 +36,7 @@ fun SettingScreen(
                         Icon(Icons.Default.ArrowBack, contentDescription = "뒤로가기")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFF1F3E9))
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFFAF7E4))
             )
         }
     ) { paddingValues ->
