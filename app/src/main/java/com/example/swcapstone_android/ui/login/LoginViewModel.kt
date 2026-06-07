@@ -24,16 +24,17 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
             if (response.status == "SUCCESS" && response.data != null) {
                 viewModelScope.launch {
-                    // 토큰 저장
                     tokenManager.saveTokens(
                         response.data.accessToken,
                         response.data.refreshToken
                     )
-
-                    registerFcmToken(response.data.accessToken)
-
                     Log.d("Login", "토큰 저장 완료!")
-                    onSuccess(response.data.onboarded)
+                    onSuccess(response.data.onboarded)  // FCM 기다리지 않고 바로 호출
+                }
+
+                // FCM 등록은 별도 코루틴으로 분리 (화면 전환 블로킹 안 함)
+                viewModelScope.launch {
+                    registerFcmToken(response.data.accessToken)
                 }
             }
         } catch (e: Exception) {
