@@ -62,6 +62,12 @@ android {
             excludes += "/META-INF/LICENSE-notice.md"
         }
     }
+
+    testOptions {
+        unitTests {
+            isReturnDefaultValues = true
+        }
+    }
 }
 
 dependencies {
