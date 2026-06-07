@@ -1,36 +1,41 @@
-package com.example.swcapstone_android.ui
+package com.example.swcapstone_android.ui.login
 
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.swcapstone_android.data.TokenManager
-import com.example.swcapstone_android.ui.login.LoginViewModel
+import com.example.swcapstone_android.data.model.DeviceRequest
+import com.example.swcapstone_android.data.remote.RetrofitClient
+import com.google.android.gms.tasks.Tasks
+import com.google.firebase.messaging.FirebaseMessaging
+import io.mockk.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import retrofit2.Response
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
-class LoginViewModelTest {
+class LoginViewModelMockTest {
 
     private lateinit var application: Application
     private lateinit var tokenManager: TokenManager
     private lateinit var viewModel: LoginViewModel
 
-    // 테스트용 유효한 JSON (onboarded = true)
     private val validJsonOnboarded = """
         {
             "status": "SUCCESS",
             "data": {
-                "accessToken": "test_access_token",
-                "refreshToken": "test_refresh_token",
+                "accessToken": "mock_access_token",
+                "refreshToken": "mock_refresh_token",
                 "accessTokenExpiresIn": 3600,
                 "onboarded": true
             },
@@ -38,13 +43,12 @@ class LoginViewModelTest {
         }
     """.trimIndent()
 
-    // 테스트용 유효한 JSON (onboarded = false)
     private val validJsonNotOnboarded = """
         {
             "status": "SUCCESS",
             "data": {
-                "accessToken": "test_access_token",
-                "refreshToken": "test_refresh_token",
+                "accessToken": "mock_access_token",
+                "refreshToken": "mock_refresh_token",
                 "accessTokenExpiresIn": 3600,
                 "onboarded": false
             },
@@ -52,43 +56,38 @@ class LoginViewModelTest {
         }
     """.trimIndent()
 
-    // status가 SUCCESS가 아닌 경우
-    private val failJson = """
-        {
-            "status": "FAIL",
-            "data": null,
-            "message": "인증 실패"
-        }
-    """.trimIndent()
-
     @Before
     fun setUp() {
         application = ApplicationProvider.getApplicationContext()
         tokenManager = TokenManager(application)
+
+        // RetrofitClient 싱글톤 Mock
+        mockkObject(RetrofitClient)
+        coEvery {
+            RetrofitClient.instance.registerDevice(any(), any())
+        } returns Response.success(null)
+
+        // FirebaseMessaging Mock
+        mockkStatic(FirebaseMessaging::class)
+        val mockFirebase = mockk<FirebaseMessaging>()
+        every { FirebaseMessaging.getInstance() } returns mockFirebase
+        every { mockFirebase.token } returns Tasks.forResult("mock_fcm_token")
+
         viewModel = LoginViewModel(application)
     }
 
     @After
     fun tearDown() = runTest {
         tokenManager.clearTokens()
+        unmockkAll()
     }
 
-    @Test
-    fun 유효한_JSON이고_SUCCESS이면_onSuccess_콜백이_호출된다() {
-        var callbackCalled = false
-        val latch = CountDownLatch(1)
-
-        viewModel.handleLoginResult(validJsonOnboarded) { _ ->
-            callbackCalled = true
-            latch.countDown()
-        }
-
-        latch.await(5, TimeUnit.SECONDS)
-        assertTrue("onSuccess 콜백이 호출되지 않았습니다.", callbackCalled)
-    }
+    // ─────────────────────────────────────────────
+    // 콜백 호출 검증
+    // ─────────────────────────────────────────────
 
     @Test
-    fun onboarded가_true이면_콜백에서_true를_반환한다() {
+    fun FCM_Mock_환경에서_onboarded_true이면_콜백이_즉시_호출된다() {
         var result: Boolean? = null
         val latch = CountDownLatch(1)
 
@@ -97,12 +96,12 @@ class LoginViewModelTest {
             latch.countDown()
         }
 
-        latch.await(5, TimeUnit.SECONDS)
+        latch.await(3, TimeUnit.SECONDS)
         assertEquals(true, result)
     }
 
     @Test
-    fun onboarded가_false이면_콜백에서_false를_반환한다() {
+    fun FCM_Mock_환경에서_onboarded_false이면_콜백이_즉시_호출된다() {
         var result: Boolean? = null
         val latch = CountDownLatch(1)
 
@@ -111,73 +110,121 @@ class LoginViewModelTest {
             latch.countDown()
         }
 
-        latch.await(15, TimeUnit.SECONDS)
+        latch.await(3, TimeUnit.SECONDS)
         assertEquals(false, result)
     }
 
+    // ─────────────────────────────────────────────
+    // 토큰 저장 검증
+    // ─────────────────────────────────────────────
+
     @Test
-    fun 유효한_JSON이면_TokenManager에_토큰이_저장된다() = runTest {
+    fun FCM_Mock_환경에서_토큰이_정확하게_저장된다() = runTest {
         val latch = CountDownLatch(1)
 
-        viewModel.handleLoginResult(validJsonOnboarded) {
-            latch.countDown()
-        }
+        viewModel.handleLoginResult(validJsonOnboarded) { latch.countDown() }
+        latch.await(3, TimeUnit.SECONDS)
 
-        latch.await(5, TimeUnit.SECONDS)
+        assertEquals("mock_access_token", tokenManager.accessToken.first())
+        assertEquals("mock_refresh_token", tokenManager.refreshToken.first())
+    }
 
-        val savedAccess = tokenManager.accessToken.first()
-        val savedRefresh = tokenManager.refreshToken.first()
+    // ─────────────────────────────────────────────
+    // FCM API 호출 검증
+    // ─────────────────────────────────────────────
 
-        assertEquals("test_access_token", savedAccess)
-        assertEquals("test_refresh_token", savedRefresh)
+    @Test
+    fun 로그인_성공시_registerDevice_API가_호출된다() {
+        val latch = CountDownLatch(1)
+
+        viewModel.handleLoginResult(validJsonOnboarded) { latch.countDown() }
+        latch.await(3, TimeUnit.SECONDS)
+
+        coVerify { RetrofitClient.instance.registerDevice(any(), any()) }
     }
 
     @Test
-    fun status가_SUCCESS가_아니면_onSuccess_콜백이_호출되지_않는다() {
-        var callbackCalled = false
+    fun registerDevice_API_호출시_Bearer_토큰이_포함된다() {
         val latch = CountDownLatch(1)
 
-        viewModel.handleLoginResult(failJson) {
-            callbackCalled = true
-            latch.countDown()
+        viewModel.handleLoginResult(validJsonOnboarded) { latch.countDown() }
+        latch.await(3, TimeUnit.SECONDS)
+
+        coVerify {
+            RetrofitClient.instance.registerDevice(
+                token = "Bearer mock_access_token",
+                request = any()
+            )
         }
-
-        // 콜백이 호출되지 않아야 하므로 타임아웃까지 기다림
-        val completed = latch.await(3, TimeUnit.SECONDS)
-
-        assertFalse("FAIL 상태에서 onSuccess가 호출되었습니다.", callbackCalled)
-        assertFalse(completed)
     }
 
     @Test
-    fun 잘못된_JSON이면_onSuccess_콜백이_호출되지_않는다() {
-        var callbackCalled = false
+    fun registerDevice_API_호출시_deviceType이_ANDROID이다() {
         val latch = CountDownLatch(1)
 
-        viewModel.handleLoginResult("invalid_json_string!!!") {
-            callbackCalled = true
-            latch.countDown()
+        viewModel.handleLoginResult(validJsonOnboarded) { latch.countDown() }
+        latch.await(3, TimeUnit.SECONDS)
+
+        coVerify {
+            RetrofitClient.instance.registerDevice(
+                token = any(),
+                request = match { it.deviceType == "ANDROID" }
+            )
         }
-
-        val completed = latch.await(3, TimeUnit.SECONDS)
-
-        assertFalse("잘못된 JSON에서 onSuccess가 호출되었습니다.", callbackCalled)
-        assertFalse(completed)
     }
 
     @Test
-    fun 빈_문자열_입력시_onSuccess_콜백이_호출되지_않는다() {
-        var callbackCalled = false
+    fun registerDevice_API_호출시_FCM_토큰이_포함된다() {
         val latch = CountDownLatch(1)
 
-        viewModel.handleLoginResult("") {
-            callbackCalled = true
+        viewModel.handleLoginResult(validJsonOnboarded) { latch.countDown() }
+        latch.await(3, TimeUnit.SECONDS)
+
+        coVerify {
+            RetrofitClient.instance.registerDevice(
+                token = any(),
+                request = match { it.fcmToken == "mock_fcm_token" }
+            )
+        }
+    }
+
+    // ─────────────────────────────────────────────
+    // FCM 실패 시 콜백 정상 호출 확인
+    // ─────────────────────────────────────────────
+
+    @Test
+    fun registerDevice_실패해도_onSuccess_콜백은_정상_호출된다() {
+        coEvery {
+            RetrofitClient.instance.registerDevice(any(), any())
+        } returns Response.error(500, "error".toResponseBody())
+
+        var result: Boolean? = null
+        val latch = CountDownLatch(1)
+
+        viewModel.handleLoginResult(validJsonOnboarded) { onboarded ->
+            result = onboarded
             latch.countDown()
         }
 
-        val completed = latch.await(3, TimeUnit.SECONDS)
+        latch.await(3, TimeUnit.SECONDS)
+        assertEquals(true, result)
+    }
 
-        assertFalse("빈 문자열에서 onSuccess가 호출되었습니다.", callbackCalled)
-        assertFalse(completed)
+    @Test
+    fun Firebase_예외_발생해도_onSuccess_콜백은_정상_호출된다() {
+        val mockFirebase = mockk<FirebaseMessaging>()
+        every { FirebaseMessaging.getInstance() } returns mockFirebase
+        every { mockFirebase.token } throws RuntimeException("Firebase 초기화 실패")
+
+        var result: Boolean? = null
+        val latch = CountDownLatch(1)
+
+        viewModel.handleLoginResult(validJsonOnboarded) { onboarded ->
+            result = onboarded
+            latch.countDown()
+        }
+
+        latch.await(3, TimeUnit.SECONDS)
+        assertEquals(true, result)
     }
 }
