@@ -12,9 +12,10 @@ import com.example.swcapstone_android.data.etc.UrlProvider
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-class AlarmViewModel(application: Application) : AndroidViewModel(application) {
-
-    private val tokenManager = TokenManager(application)
+class AlarmViewModel(
+    application: Application,
+    private val tokenManager: TokenManager = TokenManager(application)
+) : AndroidViewModel(application) {
 
     var alarmUrl by mutableStateOf("")
         private set
@@ -25,16 +26,10 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
     fun initData(nestId: String, type: String?) {
         viewModelScope.launch {
             accessTokenCache = tokenManager.accessToken.first() ?: ""
-
             when (type) {
-                "POSTCARD" -> {
-                    alarmUrl = "${UrlProvider.baseUrl}/mypage/posts?tab=sent"
-                }
-                else -> {
-                    alarmUrl = "${UrlProvider.baseUrl}/nests/$nestId"
-                }
+                "POSTCARD" -> alarmUrl = "${UrlProvider.baseUrl}/mypage/posts?tab=sent"
+                else -> alarmUrl = "${UrlProvider.baseUrl}/nests/$nestId"
             }
-            Log.d("ALARM_VIEWMODEL", "최종 브릿지 웹뷰 URL 매칭 완료 -> $alarmUrl")
         }
     }
 }

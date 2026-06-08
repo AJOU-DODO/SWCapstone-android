@@ -18,16 +18,17 @@ import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 
-class PostcardViewModel(application: Application) : AndroidViewModel(application) {
+open class PostcardViewModel(
+    application: Application,
+    private val tokenManager: TokenManager = TokenManager(application)
+) : AndroidViewModel(application) {
+
     private val context = application
-    private val tokenManager = TokenManager(context)
 
     var selectedImageUri by mutableStateOf<Uri?>(null)
         private set
-
     var message by mutableStateOf("")
         private set
-
     var isUploading by mutableStateOf(false)
         private set
 
@@ -44,29 +45,19 @@ class PostcardViewModel(application: Application) : AndroidViewModel(application
                 val authHeader = "Bearer $token"
                 val fileName = "postcard_${System.currentTimeMillis()}.jpg"
 
-                // 1. Presigned URL 요청
                 val presignedRes = RetrofitClient.instance.getPresignedUrl(authHeader, fileName)
                 if (presignedRes.isSuccessful && presignedRes.body() != null) {
                     val data = presignedRes.body()!!.data
-
-                    // 2. S3에 실제 이미지 업로드 (PUT)
                     val isUploadSuccess = uploadToS3(data.presignedUrl, uri)
 
                     if (isUploadSuccess) {
-                        // 3. 백엔드에 엽서 데이터 저장 요청
                         val requestBody = PostcardRequest(
-                            imageUrl = data.fileUrl, // S3에 저장된 최종 URL
+                            imageUrl = data.fileUrl,
                             content = message
                         )
-
                         val response = RetrofitClient.instance.createPostcard(authHeader, requestBody)
                         if (response.isSuccessful) {
-                            Log.d("Postcard", "엽서 발행 성공!")
-                            withContext(Dispatchers.Main) {
-                                onSuccess()
-                            }
-                        } else {
-                            Log.e("Postcard", "엽서 저장 실패: ${response.code()}")
+                            withContext(Dispatchers.Main) { onSuccess() }
                         }
                     }
                 }
@@ -78,19 +69,17 @@ class PostcardViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    private suspend fun uploadToS3(url: String, uri: Uri): Boolean {
+    //테스트에서 override 가능하도록 internal open으로 변경
+    internal open suspend fun uploadToS3(url: String, uri: Uri): Boolean {
         return withContext(Dispatchers.IO) {
             try {
                 val inputStream = context.contentResolver.openInputStream(uri)
                 val bytes = inputStream?.readBytes() ?: return@withContext false
                 inputStream.close()
-
                 val requestBody = bytes.toRequestBody("image/jpeg".toMediaTypeOrNull())
-                // S3 전용 인스턴스(PUT) 사용
                 val response = RetrofitClient.s3Instance.uploadImage(url, requestBody, "image/jpeg")
                 response.isSuccessful
             } catch (e: Exception) {
-                Log.e("Postcard", "S3 업로드 실패: ${e.message}")
                 false
             }
         }
