@@ -32,6 +32,8 @@ import com.example.swcapstone_android.ui.postcard.PostcardScreen
 import com.example.swcapstone_android.ui.postcard.PostcardViewModel
 import com.example.swcapstone_android.ui.alarm.AlarmScreen
 import com.example.swcapstone_android.ui.alarm.AlarmViewModel
+import com.example.swcapstone_android.ui.inquiry.InquiryScreen
+import com.example.swcapstone_android.ui.inquiry.InquiryViewModel
 
 @Composable
 fun NavGraph(
@@ -162,6 +164,14 @@ fun NavGraph(
                 },
                 onInquiryClick = { navController.navigate("inquiry") },
                 viewModel = settingViewModel
+            )
+        }
+
+        composable("inquiry") {
+            val inquiryViewModel: InquiryViewModel = viewModel()
+            InquiryScreen(
+                onBackClick = { navController.popBackStack() }, // 완료 시 혹은 뒤로가기 시 다시 설정창으로 리턴
+                viewModel = inquiryViewModel
             )
         }
 

@@ -25,7 +25,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 fun SettingScreen(
     onBackClick: () -> Unit,
     onInquiryClick: () -> Unit,
-    viewModel: SettingViewModel = viewModel()
+    viewModel: SettingViewModel
 ) {
     val mainGreenColor = Color(0xFF386641)
 
@@ -75,7 +75,7 @@ fun SettingScreen(
                 )
             }
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 24.dp), color = Color(0xFFEEEEEE))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 24.dp), color = Color(0xFFFAF7E4))
 
             // --- 반경 설정 섹션 ---
             Text(
@@ -125,7 +125,7 @@ fun SettingScreen(
                 }
             }
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 24.dp), color = Color(0xFFEEEEEE))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 24.dp), color = Color(0xFFFAF7E4))
 
             Text(
                 text = "고객센터 및 지원",

@@ -266,7 +266,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 }
 
                 val adPinsDeferred = async {
-                    RetrofitClient.instance.getAdPins(token = authHeader)
+                    RetrofitClient.instance.getAdPins(token = authHeader,
+                        latitude = lat,
+                        longitude = lng,
+                        radiusMeter = currentRadius,
+                        categoryIds = categoryIdsParam)
                 }
 
                 val normalResponse = normalPinsDeferred.await()
