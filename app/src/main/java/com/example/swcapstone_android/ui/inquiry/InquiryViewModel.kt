@@ -1,6 +1,7 @@
 package com.example.swcapstone_android.ui.inquiry
 
 import android.app.Application
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -45,6 +46,9 @@ class InquiryViewModel(application: Application) : AndroidViewModel(application)
                         title = title,
                         content = content
                     )
+                    Log.d("INQUIRY_API_DEBUG", "📍 Type    : ${selectedType.name}")
+                    Log.d("INQUIRY_API_DEBUG", "📍 Title   : $title")
+                    Log.d("INQUIRY_API_DEBUG", "📍 Content : $content")
                     val response = apiService.createInquiry("Bearer $token", request)
 
                     if (response.isSuccessful) {

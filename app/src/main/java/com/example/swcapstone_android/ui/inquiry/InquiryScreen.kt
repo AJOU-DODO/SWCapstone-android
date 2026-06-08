@@ -62,16 +62,25 @@ fun InquiryScreen(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
             )
 
-            Row(
+            androidx.compose.foundation.lazy.LazyRow(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(horizontal = 2.dp) // 좌우 살짝 여백
             ) {
-                InquiryType.values().forEach { type ->
+                items(InquiryType.values().size) { index ->
+                    val type = InquiryType.values()[index]
                     val isSelected = viewModel.selectedType == type
+
                     FilterChip(
                         selected = isSelected,
                         onClick = { viewModel.selectedType = type },
-                        label = { Text(type.title) },
+                        label = {
+                            Text(
+                                text = type.title,
+                                fontSize = 13.sp, // 글자 크기 적당히 유지
+                                maxLines = 1     // 🌟 절대 줄바꿈 되지 않도록 한 줄 제한!
+                            )
+                        },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = Color(0xFF2B6340),
                             selectedLabelColor = Color.White
