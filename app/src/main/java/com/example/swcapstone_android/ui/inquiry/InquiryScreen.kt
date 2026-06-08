@@ -57,6 +57,7 @@ fun InquiryScreen(
             Text(
                 text = "문의 유형",
                 fontSize = 14.sp,
+                color = Color.Gray,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
             )
@@ -88,6 +89,8 @@ fun InquiryScreen(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black,
                     focusedBorderColor = Color(0xFF2B6340),
                     unfocusedContainerColor = Color.White,
                     focusedContainerColor = Color.White
@@ -107,6 +110,8 @@ fun InquiryScreen(
                     .height(250.dp),
                 maxLines = 10,
                 colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black,
                     focusedBorderColor = Color(0xFF2B6340),
                     unfocusedContainerColor = Color.White,
                     focusedContainerColor = Color.White
@@ -126,7 +131,10 @@ fun InquiryScreen(
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 enabled = !viewModel.isLoading,
                 shape = MaterialTheme.shapes.medium,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2B6340))
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF2B6340),
+                    contentColor = Color.White
+                )
             ) {
                 if (viewModel.isLoading) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White, strokeWidth = 2.dp)

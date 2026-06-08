@@ -40,13 +40,14 @@ fun SettingScreen(
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFFAF7E4))
             )
-        }
+        },
+        containerColor = Color(0xFFFAF7E4)
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(Color.White)
+                .background(Color(0xFFFAF7E4))
                 .verticalScroll(rememberScrollState())
                 .padding(24.dp)
         ) {
@@ -65,7 +66,7 @@ fun SettingScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
-                    Text(text = "카테고리 필터 사용", fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                    Text(text = "카테고리 필터 사용", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = Color.Gray)
                     Text(text = "지도에서 카테고리별로 핀을 필터링합니다.", fontSize = 12.sp, color = Color.Gray)
                 }
                 Switch(
@@ -119,6 +120,7 @@ fun SettingScreen(
                         Text(
                             text = option.label,
                             style = MaterialTheme.typography.bodyLarge,
+                            color = Color.Gray,
                             modifier = Modifier.padding(start = 16.dp)
                         )
                     }
@@ -155,14 +157,6 @@ fun SettingScreen(
                     color = Color.White
                 )
             }
-
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "보내주신 문의사항은 확인 후 신속하게 처리하겠습니다.",
-                fontSize = 11.sp,
-                color = Color.LightGray,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
         }
     }
 }
