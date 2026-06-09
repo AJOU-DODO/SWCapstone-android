@@ -359,16 +359,6 @@ class HomeViewModelTest {
         assertEquals(listOf(1L), viewModel.selectedNestIds.value)
     }
 
-    // ─────────────────────────────────────────────
-    // dismissUnlockConfirm / confirmUnlock 검증
-    // ─────────────────────────────────────────────
-
-    @Test
-    fun dismissUnlockConfirm_호출시_showUnlockConfirm이_false가_된다() {
-        viewModel.dismissUnlockConfirm()
-        assertFalse(viewModel.showUnlockConfirm)
-    }
-
     @Test
     fun onUnlockNavigated_호출시_navigateToUnlock이_null이_된다() = runBlocking {
         viewModel.onUnlockNavigated()

@@ -400,7 +400,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     @SuppressLint("MissingPermission")
-    fun startTracking() {
+    open fun startTracking() {
         fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null)
     }
 
