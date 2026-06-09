@@ -3,6 +3,7 @@ package com.example.swcapstone_android.data.remote
 import com.example.swcapstone_android.data.model.CommonResponse
 import com.example.swcapstone_android.data.model.DeviceRequest
 import com.example.swcapstone_android.data.model.InquiryRequest
+import com.example.swcapstone_android.data.model.InquiryResponse
 import com.example.swcapstone_android.data.model.InterestResponse
 import com.example.swcapstone_android.data.model.MyInfoResponse
 import com.example.swcapstone_android.data.model.OsmResponse
@@ -106,6 +107,11 @@ interface ApiService {
         @Header("Authorization") authHeader: String,
         @Body request: InquiryRequest
     ): Response<Unit>
+
+    @GET("/api/v1/inquiries/me")
+    suspend fun getMyInquiries(
+        @Header("Authorization") token: String
+    ): Response<InquiryResponse>
 }
 
 // S3 업로드를 위한 별도 인터페이스

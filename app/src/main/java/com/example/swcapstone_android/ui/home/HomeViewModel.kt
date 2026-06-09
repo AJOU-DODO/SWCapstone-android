@@ -35,7 +35,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 
-class HomeViewModel(application: Application) : AndroidViewModel(application) {
+class HomeViewModel @JvmOverloads constructor(application: Application) : AndroidViewModel(application) {
 
     var isTrackingMode by mutableStateOf(false)
 
@@ -400,7 +400,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     @SuppressLint("MissingPermission")
-    fun startTracking() {
+    open fun startTracking() {
         fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null)
     }
 

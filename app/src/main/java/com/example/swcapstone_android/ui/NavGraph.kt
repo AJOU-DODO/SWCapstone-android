@@ -34,6 +34,8 @@ import com.example.swcapstone_android.ui.alarm.AlarmScreen
 import com.example.swcapstone_android.ui.alarm.AlarmViewModel
 import com.example.swcapstone_android.ui.inquiry.InquiryScreen
 import com.example.swcapstone_android.ui.inquiry.InquiryViewModel
+import com.example.swcapstone_android.ui.inquiryhistory.InquiryHistoryScreen
+import com.example.swcapstone_android.ui.inquiryhistory.InquiryHistoryViewModel
 
 @Composable
 fun NavGraph(
@@ -56,10 +58,10 @@ fun NavGraph(
                     var finalRoute = destination
 
                     if (destination == Screen.HomeScreen.route && startSelectedNestId != null) {
-                        finalRoute = if (startNotificationType == "NEST" || startNotificationType == "POSTCARD") {
-                            "alarm_screen/$startSelectedNestId?type=$startNotificationType"
-                        } else {
-                            Screen.HomeScreen.route + "?initialSelectedNestId=$startSelectedNestId"
+                        finalRoute = when (startNotificationType) {
+                            "NEST", "POSTCARD" -> "alarm_screen/$startSelectedNestId?type=$startNotificationType"
+                            "INQUIRY_ANSWERED" -> "inquiry_history"
+                            else -> Screen.HomeScreen.route + "?initialSelectedNestId=$startSelectedNestId"
                         }
                     }
 
@@ -123,7 +125,7 @@ fun NavGraph(
                 },
                 onNavigateToMypage = { navController.navigate("mypage_graph") },
                 onNavigateToCategory = { navController.navigate("category") },
-                onNavigateToInquiryHistory = {}
+                onNavigateToInquiryHistory = { navController.navigate("inquiry_history")}
             )
         }
 
@@ -169,7 +171,21 @@ fun NavGraph(
         }
 
         composable("inquiry") {
-            val inquiryViewModel: InquiryViewModel = viewModel()
+            val context = androidx.compose.ui.platform.LocalContext.current
+            val app = context.applicationContext as android.app.Application
+
+            val inquiryViewModel: InquiryViewModel = viewModel(
+                factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+                    override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+                        if (modelClass.isAssignableFrom(InquiryViewModel::class.java)) {
+                            @Suppress("UNCHECKED_CAST")
+                            return InquiryViewModel(app) as T
+                        }
+                        throw IllegalArgumentException("Unknown ViewModel class")
+                    }
+                }
+            )
+
             InquiryScreen(
                 onBackClick = { navController.popBackStack() }, // 완료 시 혹은 뒤로가기 시 다시 설정창으로 리턴
                 viewModel = inquiryViewModel
@@ -238,6 +254,34 @@ fun NavGraph(
             CategoryScreen(
                 onBackClick = { navController.popBackStack() },
                 viewModel = categoryViewModel
+            )
+        }
+
+        composable("inquiry_history") {
+            val context = androidx.compose.ui.platform.LocalContext.current
+            val app = context.applicationContext as android.app.Application
+
+            // 🚀 [정밀 리팩토링] 생성자 인자값 유실을 원천 차단하는 커스텀 팩토리 직구 주입!
+            val inquiryHistoryViewModel: InquiryHistoryViewModel = viewModel(
+                factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+                    override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+                        if (modelClass.isAssignableFrom(InquiryHistoryViewModel::class.java)) {
+                            @Suppress("UNCHECKED_CAST")
+                            return InquiryHistoryViewModel(app) as T
+                        }
+                        throw IllegalArgumentException("Unknown ViewModel class")
+                    }
+                }
+            )
+
+            InquiryHistoryScreen(
+                onBackClick = {
+                    navController.navigate(Screen.HomeScreen.route) {
+                        popUpTo("inquiry_history") { inclusive = true }
+                    }
+                },
+                onNavigateToCreateInquiry = { navController.navigate("inquiry") },
+                viewModel = inquiryHistoryViewModel
             )
         }
     }

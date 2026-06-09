@@ -10,14 +10,16 @@ import androidx.lifecycle.viewModelScope
 import com.example.swcapstone_android.data.TokenManager
 import com.example.swcapstone_android.data.model.InquiryRequest
 import com.example.swcapstone_android.data.model.InquiryType
+import com.example.swcapstone_android.data.remote.ApiService
 import com.example.swcapstone_android.data.remote.RetrofitClient
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-class InquiryViewModel(application: Application) : AndroidViewModel(application) {
-
-    private val tokenManager = TokenManager(application)
-    private val apiService = RetrofitClient.instance
+class InquiryViewModel @JvmOverloads constructor(
+    application: Application,
+    private val tokenManager: TokenManager = TokenManager(application),
+    private val apiService: ApiService = RetrofitClient.instance
+) : AndroidViewModel(application) {
 
     // UI 상태 관리 (유형 추가 🌟)
     var selectedType by mutableStateOf(InquiryType.SUGGESTION)

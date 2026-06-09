@@ -37,10 +37,10 @@ class MainActivity : ComponentActivity() {
             nestIdState = initialNestId
             notificationTypeState = initialNotificationType
             Log.d("FCM_ROUTING", "앱 종료 상태에서 알림 구동 (NEST) -> nestId: $initialNestId")
-        } else if (initialNotificationType == "POSTCARD") {
+        } else if (initialNotificationType == "POSTCARD" || initialNotificationType == "INQUIRY_ANSWERED") {
             nestIdState = "0" // 엽서는 id가 없으므로 더미값으로 락 풀기
             notificationTypeState = initialNotificationType
-            Log.d("FCM_ROUTING", "앱 종료 상태에서 알림 구동 (POSTCARD) -> type만 감지")
+            Log.d("FCM_ROUTING", "앱 종료 상태에서 알림 구동 ($initialNotificationType) -> type 감지")
         }
 
         enableEdgeToEdge()
@@ -55,8 +55,14 @@ class MainActivity : ComponentActivity() {
                 if (id != null && type != null) {
                     Log.d("FCM_ROUTING", "알림 처리 시작 -> type: $type, nestId: $id")
 
-                    navController.navigate("alarm_screen/$id?type=$type") {
-                        launchSingleTop = true
+                    if (type == "INQUIRY_ANSWERED") {
+                        navController.navigate("inquiry_history") {
+                            launchSingleTop = true
+                        }
+                    } else {
+                        navController.navigate("alarm_screen/$id?type=$type") {
+                            launchSingleTop = true
+                        }
                     }
 
                     // 처리가 끝났으므로 소진 (null로 변경되어도 if문 조건 때문에 재진입 안 함)
@@ -96,7 +102,7 @@ class MainActivity : ComponentActivity() {
         if (nestId != null) {
             nestIdState = nestId
             notificationTypeState = notificationType
-        } else if (notificationType == "POSTCARD") {
+        } else if (notificationType == "POSTCARD" || notificationType == "INQUIRY_ANSWERED") {
             nestIdState = "0"
             notificationTypeState = notificationType
         }
