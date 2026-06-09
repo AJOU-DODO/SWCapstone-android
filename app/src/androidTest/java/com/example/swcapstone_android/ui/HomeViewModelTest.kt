@@ -1,4 +1,4 @@
-package com.example.swcapstone_android.ui
+package com.example.swcapstone_android.ui.home
 
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
@@ -9,17 +9,9 @@ import com.example.swcapstone_android.data.model.InterestResponse
 import com.example.swcapstone_android.data.model.PinData
 import com.example.swcapstone_android.data.model.PinResponse
 import com.example.swcapstone_android.data.remote.RetrofitClient
-import com.example.swcapstone_android.ui.home.HomeViewModel
 import io.mockk.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.After
 import org.junit.Assert.*
@@ -30,13 +22,11 @@ import retrofit2.Response
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
-class HomeViewModelMockTest {
+class HomeViewModelTest {
 
     private lateinit var application: Application
     private lateinit var tokenManager: TokenManager
     private lateinit var viewModel: HomeViewModel
-
-    private val testDispatcher = UnconfinedTestDispatcher()
 
     private val dummyPin = PinData(
         id = 1L,
@@ -83,20 +73,37 @@ class HomeViewModelMockTest {
         data = pins
     )
 
+    // ✅ getAdPins 파라미터 전부 명시
     private fun setupDefaultMocks(
         normalPins: List<PinData> = emptyList(),
         adPins: List<PinData> = emptyList(),
         interestResponse: InterestResponse = emptyInterestResponse
     ) {
-        coEvery { RetrofitClient.instance.getUserInterests(any()) } returns
-                Response.success(interestResponse)
-        coEvery { RetrofitClient.instance.getNearbyPins(any(), any(), any(), any(), any()) } returns
-                Response.success(makePinResponse(normalPins))
-        coEvery { RetrofitClient.instance.getAdPins(any()) } returns
-                Response.success(makePinResponse(adPins))
+        coEvery {
+            RetrofitClient.instance.getUserInterests(any())
+        } returns Response.success(interestResponse)
+
+        coEvery {
+            RetrofitClient.instance.getNearbyPins(
+                token = any(),
+                latitude = any(),
+                longitude = any(),
+                radiusMeter = any(),
+                categoryIds = any()
+            )
+        } returns Response.success(makePinResponse(normalPins))
+
+        coEvery {
+            RetrofitClient.instance.getAdPins(
+                token = any(),
+                latitude = any(),
+                longitude = any(),
+                radiusMeter = any(),
+                categoryIds = any()
+            )
+        } returns Response.success(makePinResponse(adPins))
     }
 
-    // viewModelScope 코루틴이 완료될 때까지 폴링 대기
     private fun waitUntil(timeoutMs: Long = 3000, condition: () -> Boolean) {
         val deadline = System.currentTimeMillis() + timeoutMs
         while (System.currentTimeMillis() < deadline) {
@@ -119,6 +126,10 @@ class HomeViewModelMockTest {
         runBlocking { tokenManager.clearTokens() }
         unmockkAll()
     }
+
+    // ─────────────────────────────────────────────
+    // 정상 흐름 검증
+    // ─────────────────────────────────────────────
 
     @Test
     fun fetchNearbyPins_성공시_markers에_핀이_추가된다() {
@@ -161,28 +172,62 @@ class HomeViewModelMockTest {
     }
 
     @Test
+    fun fetchNearbyPins_광고핀의_isAd가_true로_설정된다() {
+        setupDefaultMocks(adPins = listOf(dummyAdPin))
+
+        viewModel.fetchNearbyPins(37.5665, 126.9780)
+        waitUntil { viewModel.markers.isNotEmpty() }
+
+        assertTrue(viewModel.markers.first { it.id == 99L }.isAd)
+    }
+
+    @Test
+    fun fetchNearbyPins_일반핀의_isAd가_false로_설정된다() {
+        setupDefaultMocks(normalPins = listOf(dummyPin))
+
+        viewModel.fetchNearbyPins(37.5665, 126.9780)
+        waitUntil { viewModel.markers.isNotEmpty() }
+
+        assertFalse(viewModel.markers.first { it.id == 1L }.isAd)
+    }
+
+    // ─────────────────────────────────────────────
+    // 카테고리 필터 검증
+    // ─────────────────────────────────────────────
+
+    @Test
     fun fetchNearbyPins_카테고리필터_활성시_getUserInterests가_호출된다() {
         setupDefaultMocks(interestResponse = dummyInterestResponse)
 
         viewModel.fetchNearbyPins(37.5665, 126.9780)
-        // getUserInterests 호출 완료까지 대기 (markers는 비어있을 수 있으므로 고정 대기)
         Thread.sleep(2000)
 
         coVerify { RetrofitClient.instance.getUserInterests(any()) }
     }
 
     // ─────────────────────────────────────────────
-    // 실패 케이스 — 조건 충족 불가 → 고정 대기
+    // 실패 케이스
     // ─────────────────────────────────────────────
 
     @Test
     fun fetchNearbyPins_서버_에러시_markers가_비어있다() {
-        coEvery { RetrofitClient.instance.getUserInterests(any()) } returns
-                Response.success(emptyInterestResponse)
-        coEvery { RetrofitClient.instance.getNearbyPins(any(), any(), any(), any(), any()) } returns
-                Response.error(500, "서버 에러".toResponseBody())
-        coEvery { RetrofitClient.instance.getAdPins(any()) } returns
-                Response.error(500, "서버 에러".toResponseBody())
+        coEvery {
+            RetrofitClient.instance.getUserInterests(any())
+        } returns Response.success(emptyInterestResponse)
+
+        coEvery {
+            RetrofitClient.instance.getNearbyPins(
+                token = any(), latitude = any(), longitude = any(),
+                radiusMeter = any(), categoryIds = any()
+            )
+        } returns Response.error(500, "서버 에러".toResponseBody())
+
+        coEvery {
+            RetrofitClient.instance.getAdPins(
+                token = any(), latitude = any(), longitude = any(),
+                radiusMeter = any(), categoryIds = any()
+            )
+        } returns Response.error(500, "서버 에러".toResponseBody())
 
         viewModel.fetchNearbyPins(37.5665, 126.9780)
         Thread.sleep(2000)
@@ -192,9 +237,23 @@ class HomeViewModelMockTest {
 
     @Test
     fun fetchNearbyPins_네트워크_예외_발생시_markers가_비어있다() {
-        coEvery { RetrofitClient.instance.getUserInterests(any()) } throws RuntimeException("네트워크 오류")
-        coEvery { RetrofitClient.instance.getNearbyPins(any(), any(), any(), any(), any()) } throws RuntimeException("네트워크 오류")
-        coEvery { RetrofitClient.instance.getAdPins(any()) } throws RuntimeException("네트워크 오류")
+        coEvery {
+            RetrofitClient.instance.getUserInterests(any())
+        } throws RuntimeException("네트워크 오류")
+
+        coEvery {
+            RetrofitClient.instance.getNearbyPins(
+                token = any(), latitude = any(), longitude = any(),
+                radiusMeter = any(), categoryIds = any()
+            )
+        } throws RuntimeException("네트워크 오류")
+
+        coEvery {
+            RetrofitClient.instance.getAdPins(
+                token = any(), latitude = any(), longitude = any(),
+                radiusMeter = any(), categoryIds = any()
+            )
+        } throws RuntimeException("네트워크 오류")
 
         viewModel.fetchNearbyPins(37.5665, 126.9780)
         Thread.sleep(2000)
@@ -216,8 +275,10 @@ class HomeViewModelMockTest {
         coVerify {
             RetrofitClient.instance.getNearbyPins(
                 token = "Bearer test_access_token",
-                latitude = any(), longitude = any(),
-                radiusMeter = any(), categoryIds = any()
+                latitude = any(),
+                longitude = any(),
+                radiusMeter = any(),
+                categoryIds = any()
             )
         }
     }
@@ -234,8 +295,83 @@ class HomeViewModelMockTest {
                 token = any(),
                 latitude = 37.5665,
                 longitude = 126.9780,
-                radiusMeter = any(), categoryIds = any()
+                radiusMeter = any(),
+                categoryIds = any()
             )
         }
+    }
+
+    @Test
+    fun fetchNearbyPins_getAdPins도_동일한_좌표로_호출된다() {
+        setupDefaultMocks()
+
+        viewModel.fetchNearbyPins(37.5665, 126.9780)
+        Thread.sleep(2000)
+
+        coVerify {
+            RetrofitClient.instance.getAdPins(
+                token = "Bearer test_access_token",
+                latitude = 37.5665,
+                longitude = 126.9780,
+                radiusMeter = any(),
+                categoryIds = any()
+            )
+        }
+    }
+
+    // ─────────────────────────────────────────────
+    // 상태 초기값 검증
+    // ─────────────────────────────────────────────
+
+    @Test
+    fun 초기_markers는_비어있다() {
+        assertTrue(viewModel.markers.isEmpty())
+    }
+
+    @Test
+    fun 초기_showBottomSheet는_false이다() {
+        assertFalse(viewModel.showBottomSheet)
+    }
+
+    @Test
+    fun 초기_showUnlockConfirm은_false이다() {
+        assertFalse(viewModel.showUnlockConfirm)
+    }
+
+    @Test
+    fun 초기_isTrackingMode는_false이다() {
+        assertFalse(viewModel.isTrackingMode)
+    }
+
+    // ─────────────────────────────────────────────
+    // onMarkerClick 검증
+    // ─────────────────────────────────────────────
+
+    @Test
+    fun onMarkerClick_호출시_showBottomSheet가_true가_된다() {
+        viewModel.onMarkerClick(dummyPin)
+        assertTrue(viewModel.showBottomSheet)
+    }
+
+    @Test
+    fun onMarkerClick_호출시_selectedNestIds에_핀_id가_들어간다() = runBlocking {
+        viewModel.onMarkerClick(dummyPin)
+        assertEquals(listOf(1L), viewModel.selectedNestIds.value)
+    }
+
+    // ─────────────────────────────────────────────
+    // dismissUnlockConfirm / confirmUnlock 검증
+    // ─────────────────────────────────────────────
+
+    @Test
+    fun dismissUnlockConfirm_호출시_showUnlockConfirm이_false가_된다() {
+        viewModel.dismissUnlockConfirm()
+        assertFalse(viewModel.showUnlockConfirm)
+    }
+
+    @Test
+    fun onUnlockNavigated_호출시_navigateToUnlock이_null이_된다() = runBlocking {
+        viewModel.onUnlockNavigated()
+        assertNull(viewModel.navigateToUnlock.value)
     }
 }

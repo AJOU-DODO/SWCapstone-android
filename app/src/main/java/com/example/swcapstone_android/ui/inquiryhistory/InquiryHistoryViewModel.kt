@@ -10,14 +10,16 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.swcapstone_android.data.TokenManager
 import com.example.swcapstone_android.data.model.InquiryItem
+import com.example.swcapstone_android.data.remote.ApiService
 import com.example.swcapstone_android.data.remote.RetrofitClient
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-class InquiryHistoryViewModel(application: Application) : AndroidViewModel(application) {
-
-    private val tokenManager = TokenManager(application)
-    private val apiService = RetrofitClient.instance
+class InquiryHistoryViewModel(
+    application: Application,
+    private val tokenManager: TokenManager = TokenManager(application),
+    private val apiService: ApiService = RetrofitClient.instance  // ApiService는 실제 인터페이스명으로 교체
+) : AndroidViewModel(application) {
 
     // 관찰 가능한 컴포즈 전용 리스트 가방
     var inquiryList = mutableStateListOf<InquiryItem>()
