@@ -12,7 +12,7 @@ import com.example.swcapstone_android.data.etc.UrlProvider
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-class AlarmViewModel(application: Application, private val tokenManager: TokenManager = TokenManager(application)) : AndroidViewModel(application) {
+class AlarmViewModel @JvmOverloads constructor(application: Application, private val tokenManager: TokenManager = TokenManager(application)) : AndroidViewModel(application) {
 
     var alarmUrl by mutableStateOf("")
         private set

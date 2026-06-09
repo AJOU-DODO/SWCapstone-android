@@ -20,7 +20,7 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.Response
 
-open class PostcardViewModel(
+open class PostcardViewModel @JvmOverloads constructor(
     application: Application,
     private val tokenManager: TokenManager = TokenManager(application)
 ) : AndroidViewModel(application) {

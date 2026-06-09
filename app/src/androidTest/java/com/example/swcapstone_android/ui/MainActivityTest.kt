@@ -55,4 +55,24 @@ class MainActivityTest {
 
         scenario.close()
     }
+    @Test
+    fun INQUIRY_ANSWERED_알림_테스트() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val inquiryIntent = Intent(context, MainActivity::class.java).apply {
+            putExtra("NOTIFICATION_TYPE", "INQUIRY_ANSWERED")
+        }
+
+        val scenario = ActivityScenario.launch<MainActivity>(inquiryIntent)
+
+        scenario.onActivity { activity ->
+            activity.triggerNewIntentForTest(inquiryIntent)
+        }
+
+        scenario.onActivity { activity ->
+            val checkIntent = activity.intent
+            assertEquals("INQUIRY_ANSWERED", checkIntent.getStringExtra("NOTIFICATION_TYPE"))
+        }
+
+        scenario.close()
+    }
 }
