@@ -122,7 +122,8 @@ fun NavGraph(
                     navController.navigate("unlock/$id")
                 },
                 onNavigateToMypage = { navController.navigate("mypage_graph") },
-                onNavigateToCategory = { navController.navigate("category") }
+                onNavigateToCategory = { navController.navigate("category") },
+                onNavigateToInquiryHistory = {}
             )
         }
 
