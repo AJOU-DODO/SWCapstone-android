@@ -137,14 +137,16 @@ tasks.register<JacocoReport>("jacocoTestReport") {
         "**/*\$ViewBinder*.*", "**/Lambda\$*.class", "**/Lambda.class",
         "**/*Lambda.class", "**/*Lambda\$*.class", "**/di/**", "**/*Activity*.*"
     )
-    val debugTree = fileTree("${project.layout.buildDirectory.get()}/tmp/kotlin-classes/debug") {
-        exclude(fileFilter)
-    }
+    val kotlinClasses = fileTree("${project.layout.buildDirectory.get()}/tmp/kotlin-classes/debug") { exclude(fileFilter) }
+    val javaClasses = fileTree("${project.layout.buildDirectory.get()}/intermediates/javac/debug/classes") { exclude(fileFilter) }
     val mainSrc = "${project.projectDir}/src/main/java"
 
     sourceDirectories.setFrom(files(mainSrc))
-    classDirectories.setFrom(files(debugTree))
+    classDirectories.setFrom(files(kotlinClasses, javaClasses))
     executionData.setFrom(fileTree(project.layout.buildDirectory.get()) {
-        include("outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec")
+        include(
+            "outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec",
+            "jacoco/testDebugUnitTest.exec"
+        )
     })
 }
