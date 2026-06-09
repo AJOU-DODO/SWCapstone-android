@@ -34,6 +34,8 @@ import com.example.swcapstone_android.ui.alarm.AlarmScreen
 import com.example.swcapstone_android.ui.alarm.AlarmViewModel
 import com.example.swcapstone_android.ui.inquiry.InquiryScreen
 import com.example.swcapstone_android.ui.inquiry.InquiryViewModel
+import com.example.swcapstone_android.ui.inquiryhistory.InquiryHistoryScreen
+import com.example.swcapstone_android.ui.inquiryhistory.InquiryHistoryViewModel
 
 @Composable
 fun NavGraph(
@@ -123,7 +125,7 @@ fun NavGraph(
                 },
                 onNavigateToMypage = { navController.navigate("mypage_graph") },
                 onNavigateToCategory = { navController.navigate("category") },
-                onNavigateToInquiryHistory = {}
+                onNavigateToInquiryHistory = { navController.navigate("inquiry_history")}
             )
         }
 
@@ -238,6 +240,14 @@ fun NavGraph(
             CategoryScreen(
                 onBackClick = { navController.popBackStack() },
                 viewModel = categoryViewModel
+            )
+        }
+
+        composable("inquiry_history") {
+            val inquiryHistoryViewModel: InquiryHistoryViewModel = viewModel()
+            InquiryHistoryScreen(
+                onBackClick = { navController.popBackStack() }, // 뒤로 가기 시 홈 화면으로 리턴
+                viewModel = inquiryHistoryViewModel
             )
         }
     }

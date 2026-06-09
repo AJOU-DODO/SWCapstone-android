@@ -109,9 +109,9 @@ fun InquiryExpandableCard(item: InquiryItem, mainGreen: Color) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                val isAnswered = item.status == "ANSWERED"
+                val isAnswered = item.statusDescription == "처리 완료"
                 Surface(
-                    color = if (isAnswered) mainGreen else Color(0xFFFF6F61),
+                    color = if (isAnswered) Color(0xFF2B6340) else Color(0xFFFF6F61),
                     shape = RoundedCornerShape(4.dp)
                 ) {
                     Text(
@@ -167,7 +167,7 @@ fun InquiryExpandableCard(item: InquiryItem, mainGreen: Color) {
                                 .background(Color(0xFFF1F3E9), shape = RoundedCornerShape(8.dp))
                                 .padding(12.dp)
                         ) {
-                            Text(text = "🗣️ 담당자 답변", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = mainGreen)
+                            Text(text = "담당자 답변", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = mainGreen)
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(text = item.answer, fontSize = 13.sp, color = Color.Black, lineHeight = 18.sp)
                         }
