@@ -32,7 +32,7 @@ import com.example.swcapstone_android.data.model.InquiryItem
 fun InquiryHistoryScreen(
     onBackClick: () -> Unit,
     onNavigateToCreateInquiry: () -> Unit,
-    viewModel: InquiryHistoryViewModel = viewModel() // 🌟 전용 뷰모델 주입으로 정정
+    viewModel: InquiryHistoryViewModel // 🌟 전용 뷰모델 주입으로 정정
 ) {
     val mainGreenColor = Color(0xFF2B6340)
     val backgroundIvory = Color(0xFFFAF7E4)
