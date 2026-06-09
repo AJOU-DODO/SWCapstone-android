@@ -60,7 +60,7 @@ fun NavGraph(
                     if (destination == Screen.HomeScreen.route && startSelectedNestId != null) {
                         finalRoute = when (startNotificationType) {
                             "NEST", "POSTCARD" -> "alarm_screen/$startSelectedNestId?type=$startNotificationType"
-                            "INQUIRY_ANSWERED" -> "inquiry_history"
+                            "INQUIRY" -> "inquiry_history"
                             else -> Screen.HomeScreen.route + "?initialSelectedNestId=$startSelectedNestId"
                         }
                     }
