@@ -68,6 +68,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                onNavigateToUnlock: (Long) -> Unit,
                onNavigateToMypage: () -> Unit,
                onNavigateToCategory: () -> Unit,
+               onNavigateToInquiryHistory: () -> Unit,
                initialSelectedNestId: String? = null) {
     val context = LocalContext.current
 
@@ -81,17 +82,16 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
         destinationIcon = BitmapDescriptorFactory.fromResource(R.drawable.ic_flag_destination)
     }
 
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed) // 기존 Drawer 유지용
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     var isMenuExpanded by remember { mutableStateOf(false) }
 
-    val scope = rememberCoroutineScope() // 지도 작업에서 추가한 scope 유지
+    val scope = rememberCoroutineScope()
 
     val webBridge = remember {
         WebBridge(onNestSelected = { id ->
             viewModel.selectPin(id)
 
             viewModel.markers.find { it.id == id }?.let { selectedPin ->
-                // 둥지 ID와 좌표를 넘겨 지오펜스 등록
                 viewModel.registerGeofence(
                     id = selectedPin.id.toString(),
                     lat = selectedPin.position.latitude,
@@ -100,7 +100,6 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                 viewModel.startTracking()
                 Log.d("Home", "지오펜스 등록 호출: ${selectedPin.id}")
             }
-            // hotfix에서 추가된 리스너 로직 유지
             Log.d("Home", "선택된 ID 처리: $id")
         })
     }
@@ -112,7 +111,6 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
         skipPartiallyExpanded = false
     )
 
-    // 위치 권한 상태 기억
     val locationPermissionState = rememberPermissionState(
         android.Manifest.permission.ACCESS_FINE_LOCATION
     )
@@ -135,7 +133,6 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
         if (!isGranted) { Log.d("Permission", "Notification permission denied") }
     }
 
-    // 화면 진입 시 권한 요청
     LaunchedEffect(Unit) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             permissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
@@ -145,19 +142,15 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
     LaunchedEffect(unlockNestId) {
         unlockNestId?.let { id ->
             onNavigateToUnlock(id)
-            viewModel.onUnlockNavigated() // 중복 이동 방지 위해 리셋
+            viewModel.onUnlockNavigated()
         }
     }
 
-    // 화면 진입 시 권한 요청
     LaunchedEffect(locationPermissionState.status.isGranted, viewModel.markers, initialSelectedNestId) {
-            // GPS
         if (!locationPermissionState.status.isGranted) {
             locationPermissionState.launchPermissionRequest()
         } else {
             viewModel.updatePermissionStatus(true)
-
-            // 알림
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 permissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
             }
@@ -165,7 +158,6 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // 구글 지도 컴포넌트
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = viewModel.cameraPositionState,
@@ -177,15 +169,11 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                 mapStyleOptions = MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style)
             ),
             onMapClick = { viewModel.showBottomSheet = false },
-            onMapLoaded = {
-                // 초기 로드 설정
-            },
             uiSettings = MapUiSettings(
                 zoomControlsEnabled = false,
                 myLocationButtonEnabled = false
             )
         ) {
-            // 마커 표시
             Clustering(
                 items = viewModel.markers,
                 onClusterItemClick = { pin ->
@@ -197,7 +185,6 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                     if (currentZoom >= 19f) {
                         viewModel.onClusterMarkerClick(cluster.items.map { it.id })
                     } else {
-                        // 직접 줌인 수행
                         scope.launch {
                             try {
                                 val targetZoom = (currentZoom + 1.25f).coerceAtMost(19f)
@@ -209,9 +196,8 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                             }
                         }
                     }
-                    true // 직접 처리했으므로 true 반환
+                    true
                 },
-
                 clusterContent = { cluster ->
                     Box(
                         contentAlignment = Alignment.Center,
@@ -228,19 +214,13 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                             color = Color.White,
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp,
-                            modifier = Modifier.padding(bottom = 2.dp) // 숫자가 둥지 중앙 아래쪽에 잘 걸치도록 보정
+                            modifier = Modifier.padding(bottom = 2.dp)
                         )
                     }
                 },
-
                 clusterItemContent = { pin ->
                     Box(modifier = Modifier.size(44.dp)) {
-                        val iconRes = if (pin.isAd) {
-                            R.drawable.ic_nest_gift
-                        } else {
-                            R.drawable.ic_nest_single
-                        }
-
+                        val iconRes = if (pin.isAd) R.drawable.ic_nest_gift else R.drawable.ic_nest_single
                         Icon(
                             painter = painterResource(id = iconRes),
                             contentDescription = if (pin.isAd) "광고 둥지" else "일반 둥지",
@@ -264,17 +244,16 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
             }
 
             viewModel.markers.find { it.id == viewModel.selectedPinId }?.let { selectedPin ->
-                // 이제 destinationIcon 변수(Bitmap)는 필요 없음! 컴포즈 UI로 직접 그림
                 MarkerComposable(
                     state = MarkerState(position = selectedPin.position),
                     keys = arrayOf(selectedPin.id),
                     zIndex = 2f
                 ) {
-                    Box(modifier = Modifier.size(44.dp)) { // 우리가 처음에 정한 깃발 추천 크기
+                    Box(modifier = Modifier.size(44.dp)) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_flag_destination),
                             contentDescription = selectedPin.title,
-                            tint = Color.Unspecified, // 깃발의 다홍색 본래 색상 유지
+                            tint = Color.Unspecified,
                             modifier = Modifier.fillMaxSize()
                         )
                     }
@@ -285,18 +264,16 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
         if (viewModel.isArrowVisible) {
             Box(
                 modifier = Modifier
-                    .align(Alignment.Center) // 화면 중앙 혹은 상단에 배치
-                    .padding(bottom = 200.dp) // 내 위치 아이콘보다 약간 위에 띄움
+                    .align(Alignment.Center)
+                    .padding(bottom = 200.dp)
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_navigation_arrow), // 화살표 아이콘
+                    painter = painterResource(id = R.drawable.ic_navigation_arrow),
                     contentDescription = "Direction Arrow",
                     tint = Color(0xFF386641),
                     modifier = Modifier
                         .size(48.dp)
-                        .graphicsLayer {
-                            rotationZ = viewModel.arrowRotation // 계산된 각도만큼 회전
-                        }
+                        .graphicsLayer { rotationZ = viewModel.arrowRotation }
                 )
             }
         }
@@ -305,7 +282,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
             Surface(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .padding(top = 84.dp), // 상단 바(64dp)보다 아래에 위치하도록 조절
+                    .padding(top = 84.dp),
                 color = if (distance <= 10) Color(0xFFE53935) else Color(0xFF386641),
                 shape = CircleShape,
                 shadowElevation = 4.dp
@@ -320,27 +297,26 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
             }
         }
 
-        // 상단 바
         HomeTopBar(modifier = Modifier.align(Alignment.TopCenter))
 
-        // 하단 버튼들 (알림, 메뉴)
+        // 🌟 [정밀 팩토링 완료] 하단 버튼들 인자값 완벽 결합
         HomeBottomButtons(
-            onAlarmClick = { /* 알림 이동 */ },
+            onWriteClick = {
+                viewModel.getActualLocation { actualLatLng ->
+                    onNavigateToWrite(actualLatLng.latitude, actualLatLng.longitude)
+                }
+            },
             onLocationClick = {
-                viewModel.fetchPinsAtUserLocation()
+                viewModel.fetchPinsAtUserLocation() // 👈 락 풀고 빼먹었던 인자 정상 주입!
             },
             onMenuClick = { isMenuExpanded = !isMenuExpanded },
             isMenuExpanded = isMenuExpanded,
             onSubMenuClick = { menuLabel ->
-                isMenuExpanded = false // 메뉴 클릭 시 닫기
+                isMenuExpanded = false
                 when(menuLabel) {
-                    "글쓰기" -> {
-                        viewModel.getActualLocation { actualLatLng ->
-                            onNavigateToWrite(actualLatLng.latitude, actualLatLng.longitude)
-                        }
-                }
-                    "카테고리" -> { onNavigateToCategory() }
-                    "마이페이지" -> { onNavigateToMypage() }
+                    "문의" -> onNavigateToInquiryHistory()
+                    "카테고리" -> onNavigateToCategory()
+                    "마이페이지" -> onNavigateToMypage()
                     "설정" -> onNavigateToSetting()
                 }
             },
@@ -355,7 +331,6 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                 containerColor = Color(0xFFFAF7E4),
                 dragHandle = { BottomSheetDefaults.DragHandle() }
             ) {
-                // 바텀 시트 내부 내용
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -364,11 +339,10 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                 ) {
                     AndroidView(
                         factory = { context ->
-                            //WebView.setWebContentsDebuggingEnabled(true) 디버그 필요할때만
                             WebView(context).apply {
                                 settings.javaScriptEnabled = true
                                 settings.domStorageEnabled = true
-                                webViewClient = WebViewClient() // 새 창 뜨지 않게 방지
+                                webViewClient = WebViewClient()
                                 setOnTouchListener { v, event ->
                                     v.parent.requestDisallowInterceptTouchEvent(true)
                                     false
@@ -381,11 +355,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
                             }
                         },
                         update = { webView ->
-                            webBridge.setData(
-                                token = accessToken,
-                                ids = selectedIds
-                            )
-
+                            webBridge.setData(token = accessToken, ids = selectedIds)
                             if (webView.url != viewModel.selectedUrl && viewModel.selectedUrl.isNotEmpty()) {
                                 webView.loadUrl(viewModel.selectedUrl)
                             }
@@ -455,7 +425,7 @@ fun HomeTopBar(modifier: Modifier) {
 
 @Composable
 fun HomeBottomButtons(
-    onAlarmClick: () -> Unit,
+    onWriteClick: () -> Unit,
     onMenuClick: () -> Unit,
     onLocationClick: () -> Unit,
     onSubMenuClick: (String) -> Unit,
@@ -468,19 +438,17 @@ fun HomeBottomButtons(
             .padding(horizontal = 24.dp, vertical = 32.dp),
         contentAlignment = Alignment.BottomCenter
     ) {
-        // 왼쪽: 알림 버튼
         FloatingActionButton(
-            onClick = onAlarmClick,
+            onClick = onWriteClick,
             containerColor = Color(0xFFF1F3E9),
             shape = CircleShape,
             modifier = Modifier
                 .size(56.dp)
                 .align(Alignment.BottomStart)
         ) {
-            Icon(painter = painterResource(id = R.drawable.ic_notification), contentDescription = "Notification")
+            Icon(painter = painterResource(id = R.drawable.ic_write), contentDescription = "Write", tint = Color(0xFF386641))
         }
 
-        // 중앙: 내 위치 버튼
         FloatingActionButton(
             onClick = onLocationClick,
             containerColor = Color.White,
@@ -492,17 +460,16 @@ fun HomeBottomButtons(
             Icon(painter = painterResource(id = R.drawable.ic_my_location), contentDescription = "My Location", tint = Color(0xFF386641))
         }
 
-        // 오른쪽: 메뉴 버튼 및 확장 메뉴
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.align(Alignment.BottomEnd),
-            verticalArrangement = Arrangement.spacedBy(12.dp) // 버튼 사이 간격
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // 확장될 서브 메뉴들
+            // 🌟 [수정 반영] 중복 글쓰기 제거하고 "설정"이 정상 등판하도록 서브 메뉴 리스트 정정!
             val menuItems = remember {
                 listOf(
                     "설정" to R.drawable.ic_setting,
-                    "글쓰기" to R.drawable.ic_write,
+                    "문의" to R.drawable.ic_inquiry,
                     "마이페이지" to R.drawable.ic_mypage,
                     "카테고리" to R.drawable.ic_category
                 )
@@ -521,16 +488,15 @@ fun HomeBottomButtons(
                         modifier = Modifier.size(48.dp)
                     ) {
                         Icon(
-                            painter = painterResource(id = menuItem.second), // 🛠️ .second로 드로어블 ID 전달
+                            painter = painterResource(id = menuItem.second),
                             contentDescription = menuItem.first,
                             tint = Color(0xFF386641),
-                            modifier = Modifier.size(24.dp) // 아이콘 크기 알맞게 조정
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                 }
             }
 
-            // 메인 메뉴 버튼
             FloatingActionButton(
                 onClick = onMenuClick,
                 containerColor = if (isMenuExpanded) Color(0xFF386641) else Color(0xFFF1F3E9),
@@ -538,7 +504,6 @@ fun HomeBottomButtons(
                 shape = CircleShape,
                 modifier = Modifier.size(56.dp)
             ) {
-                // 확장 상태에 따라 아이콘 변경 (X 모양 등)
                 Icon(
                     if (isMenuExpanded) Icons.Default.Close else Icons.Default.Menu,
                     contentDescription = "Menu"
