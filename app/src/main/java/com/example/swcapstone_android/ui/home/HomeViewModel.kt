@@ -180,6 +180,19 @@ class HomeViewModel @JvmOverloads constructor(application: Application) : Androi
                 val token = tokenManager.accessToken.first() ?: return@launch
                 val authHeader = "Bearer $token"
 
+                val locationBody = mapOf("latitude" to lat, "longitude" to lng)
+                val unlockResponse = RetrofitClient.instance.unlockNest(authHeader, id, locationBody)
+
+                val unlockBody = unlockResponse.body()
+
+                if (unlockResponse.isSuccessful && unlockBody?.status == "SUCCESS") {
+                    Log.d("Home", "해금 성공: $id")
+
+                    _navigateToUnlock.value = id
+
+                    geofenceManager.removeGeofence(id.toString())
+                }
+
                 // 1. 상세 정보 조회
                 val response = RetrofitClient.instance.getNestDetail(authHeader, id)
                 val body = response.body()
@@ -414,9 +427,9 @@ class HomeViewModel @JvmOverloads constructor(application: Application) : Androi
         selectedPinId = null
         distanceToSelectedPin = null
         isTrackingMode = false
+        Log.d("Home", "해금 요청")
 
         checkAndUnlockNest(id, pendingLat, pendingLng)
-
         showUnlockConfirm = false
     }
 

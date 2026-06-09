@@ -10,6 +10,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.swcapstone_android.data.TokenManager
 import com.example.swcapstone_android.data.model.InquiryItem
+import com.example.swcapstone_android.data.model.NoticeItem
 import com.example.swcapstone_android.data.remote.ApiService
 import com.example.swcapstone_android.data.remote.RetrofitClient
 import kotlinx.coroutines.flow.first
@@ -25,6 +26,9 @@ class InquiryHistoryViewModel(
     var inquiryList = mutableStateListOf<InquiryItem>()
         private set
 
+    var noticeList = mutableStateListOf<NoticeItem>()
+        private set
+
     var isLoading by mutableStateOf(false)
     var errorMessage by mutableStateOf<String?>(null)
 
@@ -32,9 +36,43 @@ class InquiryHistoryViewModel(
         fetchMyInquiries()
     }
 
-    fun refresh() {
-        Log.d("InquiryHistoryVM", "사용자가 작성창에서 복귀하여 새로고침을 수행합니다.")
-        fetchMyInquiries()
+    fun refresh(isNoticeTab: Boolean) {
+        if (isNoticeTab) {
+            fetchNotices()
+        } else {
+            fetchMyInquiries()
+        }
+    }
+
+    fun fetchNotices() {
+        viewModelScope.launch {
+            isLoading = true
+            errorMessage = null
+            try {
+                val token = tokenManager.accessToken.first()
+                if (token != null) {
+                    val response = apiService.getNotices("Bearer $token")
+                    if (response.isSuccessful && response.body() != null) {
+                        val body = response.body()
+                        if (body?.status == "SUCCESS" || body?.status == "200") { // 백엔드 성공 규격 매칭
+                            noticeList.clear()
+                            noticeList.addAll(body.data.content)
+                        } else {
+                            errorMessage = body?.message ?: "데이터 형식 오류가 발생했습니다."
+                        }
+                    } else {
+                        errorMessage = "공지사항을 불러오지 못했습니다. (${response.code()})"
+                    }
+                } else {
+                    errorMessage = "로그인 세션이 만료되었습니다."
+                }
+            } catch (e: Exception) {
+                errorMessage = "네트워크 오류가 발생했습니다."
+                Log.e("NoticeVM", "Fetch Notice Error", e)
+            } finally {
+                isLoading = false
+            }
+        }
     }
 
     fun fetchMyInquiries() {

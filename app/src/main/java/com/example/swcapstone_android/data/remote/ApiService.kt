@@ -8,6 +8,7 @@ import com.example.swcapstone_android.data.model.InterestResponse
 import com.example.swcapstone_android.data.model.MyInfoResponse
 import com.example.swcapstone_android.data.model.OsmResponse
 import com.example.swcapstone_android.data.model.NestDetailResponse
+import com.example.swcapstone_android.data.model.NoticeResponse
 import com.example.swcapstone_android.data.model.PinResponse
 import com.example.swcapstone_android.data.model.PostcardRequest
 import com.example.swcapstone_android.data.model.PostcardResponse
@@ -112,6 +113,11 @@ interface ApiService {
     suspend fun getMyInquiries(
         @Header("Authorization") token: String
     ): Response<InquiryResponse>
+
+    @GET("/api/v1/notices")
+    suspend fun getNotices(
+        @Header("Authorization") token: String
+    ): Response<NoticeResponse>
 }
 
 // S3 업로드를 위한 별도 인터페이스

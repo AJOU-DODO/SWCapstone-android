@@ -55,7 +55,7 @@ class MainActivity : ComponentActivity() {
                 if (id != null && type != null) {
                     Log.d("FCM_ROUTING", "알림 처리 시작 -> type: $type, nestId: $id")
 
-                    if (type == "INQUIRY_ANSWERED") {
+                    if (type == "INQUIRY") {
                         navController.navigate("inquiry_history") {
                             launchSingleTop = true
                         }
@@ -102,7 +102,7 @@ class MainActivity : ComponentActivity() {
         if (nestId != null) {
             nestIdState = nestId
             notificationTypeState = notificationType
-        } else if (notificationType == "POSTCARD" || notificationType == "INQUIRY_ANSWERED") {
+        } else if (notificationType == "POSTCARD" || notificationType == "INQUIRY") {
             nestIdState = "0"
             notificationTypeState = notificationType
         }
