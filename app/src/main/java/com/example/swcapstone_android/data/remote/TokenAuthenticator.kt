@@ -15,7 +15,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 class TokenAuthenticator(
     private val context: Context,
-    private val tokenManager: TokenManager
+    private val tokenManager: TokenManager,
+    private val baseUrl: String = BuildConfig.BASE_URL
 ) : Authenticator {
     override fun authenticate(route: Route?, response: Response): Request? {
         // 1. RefreshToken 가져오기
@@ -23,7 +24,7 @@ class TokenAuthenticator(
 
         // 2. 새 토큰 요청
         val res = Retrofit.Builder()
-            .baseUrl(BuildConfig.BASE_URL)
+            .baseUrl(baseUrl)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(ApiService::class.java)

@@ -90,7 +90,7 @@ fun WriteScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFFF1F3E9) // 홈 화면과 통일감 있는 색상
+                    containerColor = Color(0xFFFAF7E4) // 홈 화면과 통일감 있는 색상
                 )
             )
         }

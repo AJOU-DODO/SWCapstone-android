@@ -20,11 +20,6 @@ class SettingViewModel(application: Application) : AndroidViewModel(application)
     var searchRadius by mutableStateOf(sharedPrefs.getInt("search_radius", 2000))
         private set
 
-    var isDevMode by mutableStateOf(sharedPrefs.getBoolean("dev_mode", false))
-        private set
-    var customWebUrl by mutableStateOf(sharedPrefs.getString("custom_web_url", "") ?: "")
-        private set
-
     // 카테고리 설정 변경 및 저장
     fun toggleCategory(enabled: Boolean) {
         isCategoryEnabled = enabled
@@ -35,16 +30,5 @@ class SettingViewModel(application: Application) : AndroidViewModel(application)
     fun updateRadius(radius: Int) {
         searchRadius = radius
         sharedPrefs.edit { putInt("search_radius", radius) }
-    }
-
-    fun toggleDevMode(enabled: Boolean) {
-        isDevMode = enabled
-        sharedPrefs.edit { putBoolean("dev_mode", enabled) }
-    }
-
-    // [추가] 커스텀 URL 업데이트
-    fun updateCustomUrl(url: String) {
-        customWebUrl = url
-        sharedPrefs.edit { putString("custom_web_url", url) }
     }
 }

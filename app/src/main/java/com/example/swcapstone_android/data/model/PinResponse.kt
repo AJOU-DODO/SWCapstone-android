@@ -13,7 +13,8 @@ data class PinResponse(
 data class PinData(
     val id: Long,
     val latitude: Double,
-    val longitude: Double
+    val longitude: Double,
+    val isAd: Boolean = false
 ) : ClusterItem { // 👈 ClusterItem 인터페이스 추가
 
     override fun getPosition(): LatLng = LatLng(latitude, longitude)

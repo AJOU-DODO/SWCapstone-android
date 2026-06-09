@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -23,7 +24,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @Composable
 fun SettingScreen(
     onBackClick: () -> Unit,
-    viewModel: SettingViewModel = viewModel()
+    onInquiryClick: () -> Unit,
+    viewModel: SettingViewModel
 ) {
     val mainGreenColor = Color(0xFF386641)
 
@@ -36,15 +38,16 @@ fun SettingScreen(
                         Icon(Icons.Default.ArrowBack, contentDescription = "뒤로가기")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFF1F3E9))
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFFAF7E4))
             )
-        }
+        },
+        containerColor = Color(0xFFFAF7E4)
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(Color.White)
+                .background(Color(0xFFFAF7E4))
                 .verticalScroll(rememberScrollState())
                 .padding(24.dp)
         ) {
@@ -63,7 +66,7 @@ fun SettingScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
-                    Text(text = "카테고리 필터 사용", fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                    Text(text = "카테고리 필터 사용", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = Color.Gray)
                     Text(text = "지도에서 카테고리별로 핀을 필터링합니다.", fontSize = 12.sp, color = Color.Gray)
                 }
                 Switch(
@@ -73,7 +76,7 @@ fun SettingScreen(
                 )
             }
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 24.dp), color = Color(0xFFEEEEEE))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 24.dp), color = Color(0xFFFAF7E4))
 
             // --- 반경 설정 섹션 ---
             Text(
@@ -117,61 +120,42 @@ fun SettingScreen(
                         Text(
                             text = option.label,
                             style = MaterialTheme.typography.bodyLarge,
+                            color = Color.Gray,
                             modifier = Modifier.padding(start = 16.dp)
                         )
                     }
                 }
             }
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 24.dp), color = Color(0xFFEEEEEE))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 24.dp), color = Color(0xFFFAF7E4))
 
-            // --- [신규] 개발자 설정 섹션 ---
             Text(
-                text = "개발자 설정",
+                text = "고객센터 및 지원",
                 fontSize = 14.sp,
                 color = mainGreenColor,
                 fontWeight = FontWeight.Bold
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "앱 사용 중 불편한 점이나 제안사항을 남겨주세요.",
+                fontSize = 12.sp,
+                color = Color.Gray,
+                modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
+            )
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+            Button(
+                onClick = onInquiryClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = mainGreenColor),
+                shape = RoundedCornerShape(12.dp)
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(text = "개발자 모드", fontSize = 16.sp, fontWeight = FontWeight.Medium)
-                    Text(text = "커스텀 WEB_URL을 사용합니다.", fontSize = 12.sp, color = Color.Gray)
-                }
-                Switch(
-                    checked = viewModel.isDevMode,
-                    onCheckedChange = { viewModel.toggleDevMode(it) },
-                    colors = SwitchDefaults.colors(checkedThumbColor = mainGreenColor)
+                Text(
+                    text = "1:1 문의하기 작성",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
                 )
-            }
-
-            // 개발자 모드가 켜져 있을 때만 입력창 표시
-            androidx.compose.animation.AnimatedVisibility(visible = viewModel.isDevMode) {
-                Column(modifier = Modifier.padding(top = 16.dp)) {
-                    OutlinedTextField(
-                        value = viewModel.customWebUrl,
-                        onValueChange = { viewModel.updateCustomUrl(it) },
-                        label = { Text("테스트 WEB_URL 입력") },
-                        placeholder = { Text("https://example.vercel.app") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = mainGreenColor,
-                            focusedLabelColor = mainGreenColor
-                        )
-                    )
-                    Text(
-                        text = "현재 적용된 주소로 모든 웹뷰가 로드됩니다.",
-                        fontSize = 11.sp,
-                        color = mainGreenColor,
-                        modifier = Modifier.padding(top = 4.dp, start = 4.dp)
-                    )
-                }
             }
         }
     }

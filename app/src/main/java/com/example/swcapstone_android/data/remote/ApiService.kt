@@ -2,6 +2,7 @@ package com.example.swcapstone_android.data.remote
 
 import com.example.swcapstone_android.data.model.CommonResponse
 import com.example.swcapstone_android.data.model.DeviceRequest
+import com.example.swcapstone_android.data.model.InquiryRequest
 import com.example.swcapstone_android.data.model.InterestResponse
 import com.example.swcapstone_android.data.model.MyInfoResponse
 import com.example.swcapstone_android.data.model.OsmResponse
@@ -51,6 +52,15 @@ interface ApiService {
         @Query("categoryIds") categoryIds: List<Int>? = null
     ): Response<PinResponse>
 
+    @GET("api/v1/nests/ad-pins")
+    suspend fun getAdPins(
+        @Header("Authorization") token: String,
+        @Query("latitude") latitude: Double,
+        @Query("longitude") longitude: Double,
+        @Query("radiusMeter") radiusMeter: Int,
+        @Query("categoryIds") categoryIds: List<Int>? = null
+    ): Response<PinResponse>
+
     @POST("/api/v1/devices")
     suspend fun registerDevice(
         @Header("Authorization") token: String,
@@ -90,6 +100,12 @@ interface ApiService {
     suspend fun getOsmWalkingPaths(
         @Field("data") query: String // encoded=true 없이 @Field 사용
     ): Response<OsmResponse>
+
+    @POST("/api/v1/inquiries")
+    suspend fun createInquiry(
+        @Header("Authorization") authHeader: String,
+        @Body request: InquiryRequest
+    ): Response<Unit>
 }
 
 // S3 업로드를 위한 별도 인터페이스

@@ -47,7 +47,7 @@ fun CategoryScreen(
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color(0xFFF1F3E9)
+                    containerColor = Color(0xFFFAF7E4)
                 )
             )
         }

@@ -33,29 +33,33 @@ class MainActivity : ComponentActivity() {
         val initialNestId = intent.getStringExtra("SELECTED_NEST_ID")
         val initialNotificationType = intent.getStringExtra("NOTIFICATION_TYPE")
 
+        if (initialNestId != null) {
+            nestIdState = initialNestId
+            notificationTypeState = initialNotificationType
+            Log.d("FCM_ROUTING", "앱 종료 상태에서 알림 구동 (NEST) -> nestId: $initialNestId")
+        } else if (initialNotificationType == "POSTCARD") {
+            nestIdState = "0" // 엽서는 id가 없으므로 더미값으로 락 풀기
+            notificationTypeState = initialNotificationType
+            Log.d("FCM_ROUTING", "앱 종료 상태에서 알림 구동 (POSTCARD) -> type만 감지")
+        }
+
         enableEdgeToEdge()
 
         setContent {
             val navController = rememberNavController()
 
             LaunchedEffect(nestIdState, notificationTypeState) {
-                if (nestIdState != null) {
-                    val id = nestIdState
-                    val type = notificationTypeState
+                val id = nestIdState
+                val type = notificationTypeState
 
+                if (id != null && type != null) {
                     Log.d("FCM_ROUTING", "알림 처리 시작 -> type: $type, nestId: $id")
 
-                    if (type == "NEST_LIKE") {
-                        Log.d("FCM_ROUTING", "좋아요")
-                        navController.navigate("alarm_screen/$id") {
-                            launchSingleTop = true
-                        }
-                    } else {
-                        navController.navigate("home?initialSelectedNestId=$id") {
-                            launchSingleTop = true
-                        }
+                    navController.navigate("alarm_screen/$id?type=$type") {
+                        launchSingleTop = true
                     }
 
+                    // 처리가 끝났으므로 소진 (null로 변경되어도 if문 조건 때문에 재진입 안 함)
                     nestIdState = null
                     notificationTypeState = null
                 }
@@ -92,6 +96,13 @@ class MainActivity : ComponentActivity() {
         if (nestId != null) {
             nestIdState = nestId
             notificationTypeState = notificationType
+        } else if (notificationType == "POSTCARD") {
+            nestIdState = "0"
+            notificationTypeState = notificationType
         }
+    }
+
+    fun triggerNewIntentForTest(intent: Intent) {
+        onNewIntent(intent)
     }
 }
