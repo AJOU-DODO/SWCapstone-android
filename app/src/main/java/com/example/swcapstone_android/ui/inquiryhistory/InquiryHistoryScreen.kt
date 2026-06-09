@@ -31,10 +31,15 @@ import com.example.swcapstone_android.data.model.InquiryItem
 @Composable
 fun InquiryHistoryScreen(
     onBackClick: () -> Unit,
+    onNavigateToCreateInquiry: () -> Unit,
     viewModel: InquiryHistoryViewModel = viewModel() // 🌟 전용 뷰모델 주입으로 정정
 ) {
     val mainGreenColor = Color(0xFF2B6340)
     val backgroundIvory = Color(0xFFFAF7E4)
+
+    LaunchedEffect(Unit) {
+        viewModel.refresh()
+    }
 
     Scaffold(
         topBar = {
@@ -43,6 +48,19 @@ fun InquiryHistoryScreen(
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "뒤로가기")
+                    }
+                },
+                actions = {
+                    TextButton(
+                        onClick = onNavigateToCreateInquiry,
+                        modifier = Modifier.padding(end = 8.dp)
+                    ) {
+                        Text(
+                            text = "문의하기",
+                            color = mainGreenColor, // 테마 컬러 매핑
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = backgroundIvory)

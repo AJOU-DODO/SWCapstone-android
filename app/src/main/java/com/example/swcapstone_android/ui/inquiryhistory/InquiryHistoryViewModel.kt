@@ -30,6 +30,11 @@ class InquiryHistoryViewModel(application: Application) : AndroidViewModel(appli
         fetchMyInquiries()
     }
 
+    fun refresh() {
+        Log.d("InquiryHistoryVM", "사용자가 작성창에서 복귀하여 새로고침을 수행합니다.")
+        fetchMyInquiries()
+    }
+
     fun fetchMyInquiries() {
         viewModelScope.launch {
             isLoading = true

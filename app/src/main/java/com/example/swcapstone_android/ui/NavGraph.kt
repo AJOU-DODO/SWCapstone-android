@@ -246,7 +246,9 @@ fun NavGraph(
         composable("inquiry_history") {
             val inquiryHistoryViewModel: InquiryHistoryViewModel = viewModel()
             InquiryHistoryScreen(
-                onBackClick = { navController.popBackStack() }, // 뒤로 가기 시 홈 화면으로 리턴
+                onBackClick = { navController.popBackStack() },
+                // 🚀 [신규 추가] 우측 상단 버튼 눌렀을 때 작성창("inquiry")으로 연동해 주는 콜백!
+                onNavigateToCreateInquiry = { navController.navigate("inquiry") },
                 viewModel = inquiryHistoryViewModel
             )
         }
