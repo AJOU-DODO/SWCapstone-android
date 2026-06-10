@@ -3,7 +3,6 @@ package com.example.swcapstone_android.ui.splash
 import android.app.Application
 import android.content.Context
 import android.content.pm.PackageManager
-import android.location.Location
 import android.location.LocationManager
 import android.os.Build
 import android.util.Log

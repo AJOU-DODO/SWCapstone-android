@@ -1,4 +1,3 @@
-import android.databinding.tool.writer.ViewBinder
 import java.io.FileInputStream
 import java.util.Properties
 

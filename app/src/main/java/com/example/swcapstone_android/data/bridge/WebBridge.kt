@@ -1,8 +1,6 @@
 package com.example.swcapstone_android.data.bridge
 
 import android.util.Log
-import android.webkit.JavascriptInterface
-import org.json.JSONArray
 
 class WebBridge(private val onNestSelected: (Long) -> Unit) {
     private var accessToken: String? = null
@@ -19,22 +17,4 @@ class WebBridge(private val onNestSelected: (Long) -> Unit) {
         }
     }
 
-    @JavascriptInterface
-    fun getAccessToken(): String {
-        Log.d("WebBridge", "JS가 토큰 요청함")
-        return accessToken ?: ""
-    }
-
-    @JavascriptInterface
-    fun getNestIds(): String {
-        val jsonArrayString = JSONArray(nestIds).toString()
-        Log.d("WebBridge", "JS가 NestIds 가져감: $jsonArrayString")
-        return jsonArrayString
-    }
-
-    @JavascriptInterface
-    fun sendNestIdSelected(id: Long) {
-        Log.d("WebBridge", "웹에서 선택된 Nest ID: $id")
-        onNestSelected(id)
-    }
 }

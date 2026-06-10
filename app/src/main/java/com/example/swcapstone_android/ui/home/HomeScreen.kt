@@ -50,7 +50,6 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.JointType
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.gms.maps.model.RoundCap
@@ -82,7 +81,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(),
         destinationIcon = BitmapDescriptorFactory.fromResource(R.drawable.ic_flag_destination)
     }
 
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    rememberDrawerState(initialValue = DrawerValue.Closed)
     var isMenuExpanded by remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()

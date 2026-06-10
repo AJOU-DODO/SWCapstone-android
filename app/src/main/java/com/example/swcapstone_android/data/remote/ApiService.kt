@@ -5,10 +5,9 @@ import com.example.swcapstone_android.data.model.DeviceRequest
 import com.example.swcapstone_android.data.model.InquiryRequest
 import com.example.swcapstone_android.data.model.InquiryResponse
 import com.example.swcapstone_android.data.model.InterestResponse
-import com.example.swcapstone_android.data.model.MyInfoResponse
-import com.example.swcapstone_android.data.model.OsmResponse
 import com.example.swcapstone_android.data.model.NestDetailResponse
 import com.example.swcapstone_android.data.model.NoticeResponse
+import com.example.swcapstone_android.data.model.OsmResponse
 import com.example.swcapstone_android.data.model.PinResponse
 import com.example.swcapstone_android.data.model.PostcardRequest
 import com.example.swcapstone_android.data.model.PostcardResponse
@@ -18,7 +17,17 @@ import com.example.swcapstone_android.data.model.ReissueRequest
 import com.example.swcapstone_android.data.model.TokenResponse
 import okhttp3.RequestBody
 import retrofit2.Response
-import retrofit2.http.*
+import retrofit2.http.Body
+import retrofit2.http.Field
+import retrofit2.http.FormUrlEncoded
+import retrofit2.http.GET
+import retrofit2.http.Header
+import retrofit2.http.Headers
+import retrofit2.http.POST
+import retrofit2.http.PUT
+import retrofit2.http.Path
+import retrofit2.http.Query
+import retrofit2.http.Url
 
 interface ApiService {
     // 1. Presigned URL 발급 (GET)
@@ -34,11 +43,6 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Body profile: ProfileRequest
     ): Response<Unit>
-
-    @GET("/api/v1/users/me")
-    suspend fun getMyInfo(
-        @Header("Authorization") token: String
-    ): Response<MyInfoResponse>
 
     @POST("/api/v1/auth/reissue")
     suspend fun reissueToken(

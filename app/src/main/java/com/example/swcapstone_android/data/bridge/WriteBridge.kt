@@ -1,8 +1,6 @@
 package com.example.swcapstone_android.data.bridge
 
 import android.util.Log
-import android.webkit.JavascriptInterface
-import org.json.JSONObject
 
 class WriteBridge(
     private val onImageRequest: () -> Unit,
@@ -20,31 +18,4 @@ class WriteBridge(
         Log.d("WriteBridge", "데이터 업데이트됨: ${accessToken?.take(5)}, $lat, $lng")
     }
 
-    @JavascriptInterface
-    fun getAccessToken(): String {
-        Log.d("WriteBridge", "데이터 가져감")
-        return accessToken ?: ""
-    }
-
-    @JavascriptInterface
-    fun getLocation(): String {
-        val json = JSONObject().apply {
-            put("latitude", lat)
-            put("longitude", lng)
-        }
-        Log.d("WriteBridge", "위치 가져감")
-        return json.toString()
-    }
-
-    @JavascriptInterface
-    fun requestImageUpload() {
-        Log.d("WriteBridge", "사진 요청")
-        onImageRequest()
-    }
-
-    @JavascriptInterface
-    fun requestPublication(radius: Int) {
-        Log.d("WriteBridge", "발행 요청됨 - 반경: ${radius}m")
-        onPublishRequest(radius)
-    }
 }
