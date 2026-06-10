@@ -2,20 +2,15 @@ package com.example.swcapstone_android.data.remote
 
 import android.content.Context
 import com.example.swcapstone_android.BuildConfig
-import com.example.swcapstone_android.data.TokenManager
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
-import kotlin.jvm.javaClass
 
 object RetrofitClient {
     private lateinit var applicationContext: Context
 
-    fun init(context: Context) {
-        applicationContext = context.applicationContext
-    }
     private const val BASE_URL = BuildConfig.BASE_URL
 
     // 로그 확인을 위한 인터셉터
@@ -44,14 +39,6 @@ object RetrofitClient {
             .client(okHttpClient)
             .build()
             .create(S3Service::class.java)
-    }
-
-    private fun getOkHttpClient(): OkHttpClient {
-        return OkHttpClient.Builder()
-            .addInterceptor(loggingInterceptor)
-            .authenticator(TokenAuthenticator(applicationContext, TokenManager(applicationContext)))
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .build()
     }
 
     private val osmHttpClient = OkHttpClient.Builder()

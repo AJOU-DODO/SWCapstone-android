@@ -2,7 +2,6 @@ package com.example.swcapstone_android.ui.unlock
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import com.example.swcapstone_android.BuildConfig
 import com.example.swcapstone_android.data.TokenManager
 import com.example.swcapstone_android.data.etc.UrlProvider
 

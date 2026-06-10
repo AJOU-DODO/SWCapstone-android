@@ -6,13 +6,10 @@ import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.util.Base64
 import android.util.Log
-import android.webkit.WebView
-import android.webkit.WebViewClient
 import androidx.compose.runtime.mutableStateOf
 import androidx.exifinterface.media.ExifInterface
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.swcapstone_android.BuildConfig
 import com.example.swcapstone_android.data.TokenManager
 import com.example.swcapstone_android.data.etc.UrlProvider
 import kotlinx.coroutines.Dispatchers

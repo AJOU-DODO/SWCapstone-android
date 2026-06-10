@@ -1,6 +1,5 @@
 package com.example.swcapstone_android.ui
 
-import android.app.Notification
 import com.example.swcapstone_android.ui.splash.SplashScreen
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember

@@ -2,6 +2,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <queries>
+        <package android:name="com.lexa.fakegps" />
+        <package android:name="com.theappninjas.fakegpsjoystick" />
+        <package android:name="com.incorporateapps.fakegps.fre" />
+        <package android:name="com.blogspot.neapp.fakegpslocation" />
+        <package android:name="com.gsmartstudio.fakegps" />
+    </queries>
+
     <uses-permission android:name="android.permission.INTERNET" />
 
     <uses-permission

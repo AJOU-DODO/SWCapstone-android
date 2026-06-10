@@ -33,11 +33,11 @@ class AlarmViewModelTest {
 
         application = ApplicationProvider.getApplicationContext()
 
-        // ✅ mockkConstructor 대신 mockk로 직접 Mock 생성
+        // mockkConstructor 대신 mockk로 직접 Mock 생성
         mockTokenManager = mockk<TokenManager>()
         every { mockTokenManager.accessToken } returns flowOf("mock_access_token")
 
-        // ✅ Mock을 생성자로 주입
+        // Mock을 생성자로 주입
         viewModel = AlarmViewModel(application, mockTokenManager)
     }
 
@@ -56,7 +56,7 @@ class AlarmViewModelTest {
     @Test
     fun accessToken이_null이면_빈_문자열로_저장된다() = runTest(testDispatcher) {
         every { mockTokenManager.accessToken } returns flowOf(null)
-        // ✅ Mock이 바뀌었으므로 새 인스턴스 필요
+        // Mock이 바뀌었으므로 새 인스턴스 필요
         val vm = AlarmViewModel(application, mockTokenManager)
         vm.initData(nestId = "nest_123", type = null)
         assertEquals("", vm.accessTokenCache)

@@ -5,7 +5,6 @@ import android.net.Uri
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.swcapstone_android.data.TokenManager
-import com.example.swcapstone_android.data.model.PostcardRequest
 import com.example.swcapstone_android.data.model.PresignedData
 import com.example.swcapstone_android.data.model.PresignedResponse
 import com.example.swcapstone_android.data.remote.RetrofitClient

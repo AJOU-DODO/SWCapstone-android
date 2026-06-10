@@ -8,7 +8,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.swcapstone_android.data.TokenManager
 import com.example.swcapstone_android.data.model.PresignedData
 import com.example.swcapstone_android.data.model.PresignedResponse
-import com.example.swcapstone_android.data.model.ProfileRequest
 import com.example.swcapstone_android.data.remote.RetrofitClient
 import com.example.swcapstone_android.ui.userdetail.UserDetailViewModel
 import com.google.android.gms.tasks.Tasks

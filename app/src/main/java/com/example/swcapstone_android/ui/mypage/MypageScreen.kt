@@ -31,7 +31,7 @@ fun MypageScreen(
     onNavigateToPostcard: () -> Unit,
     viewModel: MypageViewModel = viewModel()
 ) {
-    val context = LocalContext.current
+    LocalContext.current
 
     val accessToken by viewModel.accessToken.collectAsState(initial = null)
     val url = remember { viewModel.getMypageUrl() }

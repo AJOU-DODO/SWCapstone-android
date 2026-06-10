@@ -30,7 +30,6 @@ class InquiryHistoryViewModelTest {
     private lateinit var application: Application
     private lateinit var mockTokenManager: TokenManager
     private lateinit var mockApiService: ApiService
-    private lateinit var viewModel: InquiryHistoryViewModel
 
     // ─────────────────────────────────────────────
     // 더미 데이터
@@ -100,8 +99,10 @@ class InquiryHistoryViewModelTest {
     }
 
     // init에서 fetchMyInquiries가 호출되므로 항상 Mock 설정 후 생성
-    private fun createViewModel() = InquiryHistoryViewModel(
-        application, mockTokenManager, mockApiService
+    private fun createViewModel(isNoticeTab: Boolean = false) = InquiryHistoryViewModel(
+        application = application,
+        tokenManager = mockTokenManager,
+        apiService = mockApiService
     )
 
     // ─────────────────────────────────────────────
@@ -197,7 +198,7 @@ class InquiryHistoryViewModelTest {
         assertEquals(1, vm.inquiryList.size)
 
         coEvery { mockApiService.getMyInquiries(any()) } returns successResponse(secondItems)
-        vm.refresh()
+        vm.refresh(isNoticeTab = false)
         assertEquals(2, vm.inquiryList.size)
         assertEquals("두번째", vm.inquiryList[0].title)
     }
@@ -294,7 +295,7 @@ class InquiryHistoryViewModelTest {
         coEvery { mockApiService.getMyInquiries(any()) } returns successResponse()
 
         val vm = createViewModel()
-        vm.refresh()
+        vm.refresh(isNoticeTab = false)
 
         // init 1번 + refresh 1번 = 총 2번
         coVerify(exactly = 2) { mockApiService.getMyInquiries(any()) }

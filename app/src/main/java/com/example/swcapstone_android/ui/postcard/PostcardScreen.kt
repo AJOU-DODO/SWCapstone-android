@@ -23,7 +23,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.swcapstone_android.R
-import androidx.compose.ui.tooling.preview.Preview
 import com.example.swcapstone_android.ui.mypage.MypageViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)

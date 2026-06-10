@@ -12,7 +12,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.swcapstone_android.BuildConfig
 import com.example.swcapstone_android.data.TokenManager
 import com.example.swcapstone_android.data.etc.UrlProvider
 import com.example.swcapstone_android.data.model.PinData
